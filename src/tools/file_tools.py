@@ -59,6 +59,60 @@ def search_code(query: str, path: str = ".") -> str:
                 continue
     return "\n".join(results) if results else "未找到匹配项。"
 
+def edit_block(path: str, pattern: str, replacement: str, is_regex: bool = False) -> str:
+    """
+    使用正则或字符串匹配替换文件中的代码块。
+    
+    使用场景：
+    - 局部修改文件，避免全量重写
+    - 批量替换相同模式的代码
+    - 重构函数名、变量名
+    
+    Args:
+        path: 文件路径
+        pattern: 要匹配的模式（字符串或正则表达式）
+        replacement: 替换内容
+        is_regex: 是否使用正则表达式（默认 False）
+    
+    Returns:
+        操作结果描述，包含替换次数
+    
+    示例：
+        >>> edit_block("app.py", "old_function", "new_function")
+        "成功替换 3 处匹配项"
+    """
+    try:
+        if not os.path.exists(path):
+            return f"错误：文件 '{path}' 不存在。"
+        
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # 备份原文件
+        backup_path = f"{path}.bak"
+        with open(backup_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        
+        # 执行替换
+        if is_regex:
+            new_content, count = re.subn(pattern, replacement, content)
+        else:
+            count = content.count(pattern)
+            new_content = content.replace(pattern, replacement)
+        
+        if count == 0:
+            return f"警告：未找到匹配项 '{pattern}'。文件未修改。"
+        
+        # 写入修改后的内容
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        
+        return f"成功替换 {count} 处匹配项。备份已保存为 '{backup_path}'。"
+    except re.error as e:
+        return f"正则表达式错误：{str(e)}"
+    except Exception as e:
+        return f"编辑失败：{str(e)}"
+
 def create_directory(path: str) -> str:
     """创建目录（包括父目录）。"""
     try:
@@ -132,6 +186,7 @@ def get_file_tools():
         write_file, 
         insert_code, 
         search_code,
+        edit_block,
         create_directory,
         delete_file,
         list_directory,

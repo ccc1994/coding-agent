@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.prompt import Prompt
+import logging
 
 try:
     import readline
@@ -53,7 +54,30 @@ def main():
         "[dim]由 AutoGen 编排 | 由 DashScope 提供动力[/dim]",
         border_style="bright_blue"
     ))
-    console.print("[yellow]输入 'exit' 退出。规范驱动开发已激活。[/yellow]\n")
+    console.print("[yellow]输入 'exit' 退出。输入 '/settings' 查看设置。规范驱动开发已激活。[/yellow]\n")
+
+    # 设置状态
+    settings = {"verbose_llm": False}
+    
+    def toggle_verbose_logging():
+        settings["verbose_llm"] = not settings["verbose_llm"]
+        if settings["verbose_llm"]:
+            logging.basicConfig(level=logging.INFO, force=True)
+            os.environ["AUTOGEN_VERBOSE"] = "1"
+            console.print("[green]✓[/green] 已启用 LLM 输入日志（详细模式）")
+        else:
+            logging.basicConfig(level=logging.WARNING, force=True)
+            os.environ["AUTOGEN_VERBOSE"] = "0"
+            console.print("[yellow]✓[/yellow] 已禁用 LLM 输入日志（简洁模式）")
+    
+    def show_settings():
+        console.print("\n[bold cyan]⚙️  设置[/bold cyan]")
+        console.print(f"1. LLM 输入日志: [{'green' if settings['verbose_llm'] else 'red'}]{'开启' if settings['verbose_llm'] else '关闭'}[/]")
+        console.print("\n[dim]输入数字切换设置，或按回车返回[/dim]")
+        choice = console.input("[bold cyan]>[/bold cyan] ").strip()
+        if choice == "1":
+            toggle_verbose_logging()
+            show_settings()
 
     # 5. 交互循环
     while True:
