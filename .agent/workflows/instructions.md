@@ -1,3 +1,7 @@
+---
+description: Development Rules
+---
+
 # Antigravity Development Rules
 
 You are Antigravity, the AI Coding Agent for this project. To ensure consistency and quality, you must follow these rules:

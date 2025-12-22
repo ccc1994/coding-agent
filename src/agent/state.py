@@ -4,7 +4,7 @@ import json
 STATE_FILE = ".ca/state.json"
 
 def save_state(project_root: str, current_task: str, status: str, history: list):
-    """Saves the current session state."""
+    """保存当前会话状态。"""
     state_path = os.path.join(project_root, STATE_FILE)
     state = {
         "current_task": current_task,
@@ -15,7 +15,7 @@ def save_state(project_root: str, current_task: str, status: str, history: list)
         json.dump(state, f, indent=4)
 
 def load_state(project_root: str):
-    """Loads the session state if it exists."""
+    """如果存在，则加载会话状态。"""
     state_path = os.path.join(project_root, STATE_FILE)
     if os.path.exists(state_path):
         with open(state_path, "r") as f:

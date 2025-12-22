@@ -2,10 +2,10 @@ from autogen import GroupChat, GroupChatManager, register_function
 from src.tools.file_tools import get_file_tools
 from src.tools.shell_tools import get_shell_tools
 
-def setup_orchestration(pm, coder, reviewer, tester, user_proxy):
-    """Register tools and setup GroupChat with spec-driven flow."""
+def setup_orchestration(architect, coder, reviewer, tester, user_proxy):
+    """注册工具并设置带有规范驱动流程的 GroupChat。"""
     
-    # 1. Register File Tools for Coder
+    # 1. 为 Coder 注册文件工具
     for tool in get_file_tools():
         register_function(
             tool,
@@ -15,7 +15,7 @@ def setup_orchestration(pm, coder, reviewer, tester, user_proxy):
             description=tool.__doc__
         )
 
-    # 2. Register Shell Tools for Tester
+    # 2. 为 Tester 注册 Shell 工具
     for tool in get_shell_tools():
         register_function(
             tool,
@@ -25,31 +25,31 @@ def setup_orchestration(pm, coder, reviewer, tester, user_proxy):
             description=tool.__doc__
         )
 
-    # 3. Define Group Chat flow
-    # Specific sequence: Architect -> Coder -> Reviewer -> Tester
-    # We use custom speaker selection to ensure the loop follows the spec
+    # 3. 定义群聊流程 (Group Chat flow)
+    # 特定顺序：Architect -> Coder -> Reviewer -> Tester
+    # 我们使用自定义发言者选择逻辑来确保流程符合规范
     def custom_speaker_selection(last_speaker, groupchat):
-        """Custom logic to ensure spec-driven loop."""
+        """确保规范驱动循环的自定义逻辑。"""
         messages = groupchat.messages
         if not messages:
-            return pm # Start with Architect
+            return architect # 从架构师开始
         
         last_speaker_name = last_speaker.name
         
         if last_speaker_name == "User":
-            return pm
+            return architect
         elif last_speaker_name == "Architect":
             return coder
         elif last_speaker_name == "Coder":
             return reviewer
         elif last_speaker_name == "Reviewer":
-            # If reviewer approves, go to tester, else back to coder
+            # 如果审核员批准，进入测试环节，否则返回 Coder 处修改
             last_msg = messages[-1]["content"].upper()
             if "APPROVE" in last_msg or "LOOKS GOOD" in last_msg:
                 return tester
             return coder
         elif last_speaker_name == "Tester":
-            # If tester passes, terminate or ask user, else back to coder
+            # 如果测试通过，终止或询问用户，否则返回 Coder 调试
             last_msg = messages[-1]["content"].upper()
             if "FAIL" in last_msg or "ERROR" in last_msg:
                 return coder
@@ -58,7 +58,7 @@ def setup_orchestration(pm, coder, reviewer, tester, user_proxy):
         return "auto"
 
     groupchat = GroupChat(
-        agents=[user_proxy, pm, coder, reviewer, tester],
+        agents=[user_proxy, architect, coder, reviewer, tester],
         messages=[],
         max_round=50,
         speaker_selection_method=custom_speaker_selection,
@@ -67,11 +67,11 @@ def setup_orchestration(pm, coder, reviewer, tester, user_proxy):
 
     manager = GroupChatManager(
         groupchat=groupchat,
-        llm_config=pm.llm_config
+        llm_config=architect.llm_config
     )
 
     return manager
 
 def start_multi_agent_session(manager, user_proxy, user_input: str):
-    """Initiates the cooperative conversation."""
+    """启动协作会话。"""
     user_proxy.initiate_chat(manager, message=user_input)

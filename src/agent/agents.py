@@ -3,53 +3,51 @@ from autogen import AssistantAgent, UserProxyAgent
 from src.tools.file_tools import get_file_tools
 from src.tools.shell_tools import get_shell_tools
 
+def load_role_prompt(role: str) -> str:
+    """从 prompts 目录加载特定角色的提示词。"""
+    prompt_path = os.path.join(os.path.dirname(__file__), "prompts", f"{role.lower()}.md")
+    if os.path.exists(prompt_path):
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    return ""
+
 def get_agent_configs():
-    """Load agent-specific configurations from .env with fallback."""
+    """从 .env 加载特定 Agent 的配置，包含回退机制。"""
     default_model = os.getenv("DEFAULT_MODEL_ID")
+    
     return {
         "Architect": {
-            "model": os.getenv("PM_MODEL_ID") or default_model,
-            "system_message": """You are the **Product Manager and Architect**. 
-Your goal is to analyze user requirements and convert them into structured technical specifications (specs.md) or task lists (todo_list).
-Focus on file structure, API definitions, and logic flows. 
-Ensure the plan is clear for the Coder to implement."""
+            "model": os.getenv("ARCHITECT_MODEL_ID") or os.getenv("PM_MODEL_ID") or default_model,
+            "system_message": load_role_prompt("Architect")
         },
         "Coder": {
             "model": os.getenv("CODER_MODEL_ID") or default_model,
-            "system_message": """You are the **Coder**. Your goal is to implement specific code based on the Architect's design.
-Follow a 'Level 1-3' context loading strategy:
-- Level 1 (Structure/Todo) is already in your context.
-- Use 'read_file' for Level 2 context (file content).
-- Use 'search_code' for Level 3 context (discovery).
-Use 'insert_code' for precise changes to save tokens.
-After implementation, tell the Reviewer to audit your work."""
+            "system_message": load_role_prompt("Coder")
         },
         "Reviewer": {
             "model": os.getenv("REVIEWER_MODEL_ID") or default_model,
-            "system_message": """You are the **Code Reviewer**. Audit the Coder's work for bugs, style, and edge cases.
-Reference the Architect's plan to ensure compliance.
-If you find issues, provide specific feedback.
-If the code is correct, say 'APPROVE' clearly to proceed to testing."""
+            "system_message": load_role_prompt("Reviewer")
         },
         "Tester": {
             "model": os.getenv("TESTER_MODEL_ID") or default_model,
-            "system_message": """You are the **QA/Tester**. Write/run tests for the code changes.
-Use 'execute_shell' to run commands and observe outputs.
-If tests pass, say 'VERIFIED' and 'TERMINATE' to end the session.
-If tests fail, provide logs to the Coder for debugging."""
+            "system_message": load_role_prompt("Tester")
         }
     }
 
 def create_agents(api_key: str, base_url: str):
-    """Initialize AutoGen agents with per-agent model configs."""
+    """初始化带有特定角色模型配置的 AutoGen Agent。"""
     configs = get_agent_configs()
     
-    # Validate that all required model IDs are set
+    # 校验是否设置了所有必需的模型 ID
     missing_models = [role for role, config in configs.items() if not config.get("model")]
     if missing_models:
-        raise ValueError(f"Missing model IDs in .env for: {', '.join(missing_models)}")
+        raise ValueError(f"以下角色在 .env 中缺失模型 ID：{', '.join(missing_models)}")
 
     def make_config(model_id):
+        cache_seed_raw = os.getenv("CACHE_SEED", "42")
+        # Handle "None" or empty string to disable caching
+        cache_seed = None if cache_seed_raw.lower() == "none" or not cache_seed_raw else int(cache_seed_raw)
+        
         return {
             "config_list": [{
                 "model": model_id,
@@ -57,10 +55,10 @@ def create_agents(api_key: str, base_url: str):
                 "base_url": base_url,
                 "api_type": "openai",
             }],
-            "cache_seed": 42
+            "cache_seed": cache_seed
         }
 
-    pm = AssistantAgent(
+    architect = AssistantAgent(
         name="Architect",
         system_message=configs["Architect"]["system_message"],
         llm_config=make_config(configs["Architect"]["model"])
@@ -92,4 +90,4 @@ def create_agents(api_key: str, base_url: str):
         code_execution_config=False
     )
 
-    return pm, coder, reviewer, tester, user_proxy
+    return architect, coder, reviewer, tester, user_proxy

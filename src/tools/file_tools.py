@@ -6,16 +6,16 @@ from rich.console import Console
 console = Console()
 
 def read_file(path: str) -> str:
-    """Read the contents of a file. (Level 2 Context)"""
+    """读取文件内容。（第二级上下文）"""
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
 def write_file(path: str, content: str) -> str:
-    """Write content to a file. Requires user confirmation."""
-    if not Confirm.ask(f"[bold yellow]Allow writing to {path}?[/bold yellow]"):
-        return "Action cancelled by user."
+    """将内容写入文件。需要用户确认。"""
+    if not Confirm.ask(f"[bold yellow]允许写入 {path} 吗？[/bold yellow]"):
+        return "用户取消了操作。"
 
-    # Safety: Backup before writing
+    # 安全策略：写入前先备份
     backup_path = f"{path}.bak"
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
@@ -25,15 +25,15 @@ def write_file(path: str, content: str) -> str:
             
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
-    return f"File '{path}' written successfully. Backup created as '{backup_path}'."
+    return f"文件 '{path}' 写入成功。备份已创建为 '{backup_path}'。"
 
 def insert_code(path: str, line_number: int, content: str) -> str:
-    """Insert code at a specific line number. Requires user confirmation."""
-    if not Confirm.ask(f"[bold yellow]Allow code insertion into {path} at line {line_number}?[/bold yellow]"):
-        return "Action cancelled by user."
+    """在特定行号插入代码。需要用户确认。"""
+    if not Confirm.ask(f"[bold yellow]允许在 {path} 的第 {line_number} 行插入代码吗？[/bold yellow]"):
+        return "用户取消了操作。"
 
     if not os.path.exists(path):
-        return f"Error: File '{path}' does not exist."
+        return f"错误：文件 '{path}' 不存在。"
     
     with open(path, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -43,10 +43,10 @@ def insert_code(path: str, line_number: int, content: str) -> str:
     
     with open(path, "w", encoding="utf-8") as f:
         f.writelines(lines)
-    return f"Code inserted into '{path}' at line {line_number}."
+    return f"代码已成功插入到 '{path}' 的第 {line_number} 行。"
 
 def search_code(query: str, path: str = ".") -> str:
-    """Search for a pattern in files (Level 3 Context)."""
+    """在文件中搜索特定模式。（第三级上下文）"""
     results = []
     for root, dirs, files in os.walk(path):
         if any(x in root for x in [".git", ".ca", "node_modules", "__pycache__"]):
@@ -60,8 +60,8 @@ def search_code(query: str, path: str = ".") -> str:
                             results.append(f"{file_path}:{i}: {line.strip()}")
             except (UnicodeDecodeError, PermissionError):
                 continue
-    return "\n".join(results) if results else "No matches found."
+    return "\n".join(results) if results else "未找到匹配项。"
 
 def get_file_tools():
-    """Returns a list of tools for file operations."""
+    """返回用于文件操作的工具列表。"""
     return [read_file, write_file, insert_code, search_code]

@@ -6,8 +6,8 @@ from rich.prompt import Confirm
 console = Console()
 
 def execute_shell(command: str) -> str:
-    """Execute a shell command with safety checks and user confirmation."""
-    # Safety: Hard block dangerous commands
+    """带有安全检查和用户确认的 Shell 命令执行。"""
+    # 安全策略：硬阻断危险命令
     danger_patterns = [
         r"rm\s+-rf\s+/",
         r"curl.*\|\s*sh",
@@ -20,9 +20,9 @@ def execute_shell(command: str) -> str:
         if re.search(pattern, command):
             return f"Error: Command '{command}' is blocked for security reasons (Safety Policy)."
 
-    console.print(f"\n[bold red]Safety Warning:[/bold red] Agent wants to execute: [cyan]{command}[/cyan]")
-    if not Confirm.ask("[bold yellow]Execute this command?[/bold yellow]"):
-        return "Command execution cancelled by user."
+    console.print(f"\n[bold red]安全警示：[/bold red] Agent 想要执行：[cyan]{command}[/cyan]")
+    if not Confirm.ask("[bold yellow]确定执行此命令吗？[/bold yellow]"):
+        return "用户取消了命令执行。"
 
     try:
         result = subprocess.run(
@@ -31,12 +31,12 @@ def execute_shell(command: str) -> str:
         output = result.stdout or ""
         if result.stderr:
             output += f"\nErrors:\n{result.stderr}"
-        return output or "Command executed successfully (no output)."
+        return output or "命令执行成功（无输出）。"
     except subprocess.TimeoutExpired:
-        return "Error: Command timed out after 60 seconds."
+        return "错误：命令在 60 秒后超时。"
     except Exception as e:
-        return f"Error executing command: {str(e)}"
+        return f"执行命令时出错：{str(e)}"
 
 def get_shell_tools():
-    """Returns a list of tools for shell operations."""
+    """返回用于 Shell 操作的工具列表。"""
     return [execute_shell]

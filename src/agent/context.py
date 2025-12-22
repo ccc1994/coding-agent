@@ -2,7 +2,7 @@ import os
 import json
 
 def get_file_tree(path: str = ".") -> str:
-    """Generates a simple file tree string. (Level 1 Context)"""
+    """生成简单的文件树字符串。（第一级上下文）"""
     tree = []
     for root, dirs, files in os.walk(path):
         if any(x in root for x in [".git", ".ca", "node_modules", "__pycache__"]):
@@ -16,9 +16,9 @@ def get_file_tree(path: str = ".") -> str:
     return "\n".join(tree)
 
 def get_level1_context(project_root: str) -> str:
-    """Compiles Level 1 mandatory context."""
+    """编译第一级必需的上下文。"""
     tree = get_file_tree(project_root)
-    # Check for active todo_list in .ca
+    # 检查 .ca 目录下是否存在活跃的待办事项列表
     todo_list = ""
     ca_todo = os.path.join(project_root, ".ca", "todo_list.md")
     if os.path.exists(ca_todo):
