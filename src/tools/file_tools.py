@@ -11,9 +11,7 @@ def read_file(path: str) -> str:
         return f.read()
 
 def write_file(path: str, content: str) -> str:
-    """将内容写入文件。需要用户确认。"""
-    if not Confirm.ask(f"[bold yellow]允许写入 {path} 吗？[/bold yellow]"):
-        return "用户取消了操作。"
+    """将内容写入文件。"""
 
     # 安全策略：写入前先备份
     backup_path = f"{path}.bak"
@@ -28,9 +26,7 @@ def write_file(path: str, content: str) -> str:
     return f"文件 '{path}' 写入成功。备份已创建为 '{backup_path}'。"
 
 def insert_code(path: str, line_number: int, content: str) -> str:
-    """在特定行号插入代码。需要用户确认。"""
-    if not Confirm.ask(f"[bold yellow]允许在 {path} 的第 {line_number} 行插入代码吗？[/bold yellow]"):
-        return "用户取消了操作。"
+    """在特定行号插入代码。"""
 
     if not os.path.exists(path):
         return f"错误：文件 '{path}' 不存在。"

@@ -20,9 +20,24 @@ def execute_shell(command: str) -> str:
         if re.search(pattern, command):
             return f"Error: Command '{command}' is blocked for security reasons (Safety Policy)."
 
-    console.print(f"\n[bold red]安全警示：[/bold red] Agent 想要执行：[cyan]{command}[/cyan]")
-    if not Confirm.ask("[bold yellow]确定执行此命令吗？[/bold yellow]"):
-        return "用户取消了命令执行。"
+    # 定义需要确认的危险命令模式
+    dangerous_patterns = [
+        r"\brm\b", r"\bmv\b", r"\bsudo\b", r"\bdd\b",
+        r"\bkill\b", r"\bchmod\b", r"\bchown\b", 
+        r"\breboot\b", r"\bshutdown\b", r"\binit\b",
+        r"\bmkfs\b", r"\bformat\b"
+    ]
+    
+    # 检查是否为危险命令
+    is_dangerous = any(re.search(pattern, command) for pattern in dangerous_patterns)
+    
+    if is_dangerous:
+        console.print(f"\n[bold red]安全警示：[/bold red] Agent 想要执行危险命令：[cyan]{command}[/cyan]")
+        if not Confirm.ask("[bold yellow]确定执行此命令吗？[/bold yellow]"):
+            return "用户取消了命令执行。"
+    else:
+        # 安全命令直接执行，仅显示提示
+        console.print(f"[dim]执行命令：{command}[/dim]")
 
     try:
         result = subprocess.run(
