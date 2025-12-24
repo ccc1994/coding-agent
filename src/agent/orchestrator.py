@@ -3,17 +3,18 @@ from src.tools.file_tools import get_file_tools
 from src.tools.shell_tools import get_shell_tools
 from src.tools.git_tools import get_git_tools
 
-def setup_implementation_group_chat(coder, reviewer, tester, manager_config):
+def setup_implementation_group_chat(coder, reviewer, tester, user_proxy,manager_config):
     """设置实现子聊天组，负责代码实现、审查和测试。"""
     # 定义实现子聊天组的 FSM 状态机图
     implementation_graph_dict = {
-        coder: [reviewer],                 # 程序员 -> 审核员检查
-        reviewer: [coder, tester],         # 审核员 -> 不通过回程序员，通过去测试员
-        tester: [coder, tester],           # 测试员 -> 失败回程序员，成功结束
+        user_proxy: [coder, reviewer, tester],
+        coder: [reviewer,user_proxy],                 # 程序员 -> 审核员检查
+        reviewer: [coder, tester,user_proxy],         # 审核员 -> 不通过回程序员，通过去测试员
+        tester: [coder, user_proxy],           # 测试员 -> 失败回程序员，成功结束
     }
 
     implementation_groupchat = GroupChat(
-        agents=[coder, reviewer, tester],
+        agents=[coder, reviewer, tester, user_proxy],
         messages=[],
         max_round=30,
         speaker_selection_method="auto",
@@ -24,36 +25,11 @@ def setup_implementation_group_chat(coder, reviewer, tester, manager_config):
     implementation_manager = GroupChatManager(
         groupchat=implementation_groupchat,
         llm_config=manager_config,
-        is_termination_msg=lambda x: "TERMINATE" in x.get("content", "")
+        is_termination_msg=lambda x: "TERMINATE" in x.get("content", ""),
+        description="负责接受并完成 architect 的任务"
     )
 
     return implementation_manager
-
-def setup_main_group_chat(architect, implementation_manager, user_proxy, manager_config):
-    """设置主聊天组，负责项目规划和子聊天组协调。"""
-    # 定义主聊天组的 FSM 状态机图
-    main_graph_dict = {
-        user_proxy: [architect],           # 用户输入 -> 架构师规划
-        architect: [implementation_manager, user_proxy],  # 架构师 -> 实现管理器
-        implementation_manager: [architect, user_proxy],  # 实现管理器 -> 架构师或用户
-    }
-
-    main_groupchat = GroupChat(
-        agents=[user_proxy, architect, implementation_manager],
-        messages=[],
-        max_round=20,
-        speaker_selection_method="auto",
-        allowed_or_disallowed_speaker_transitions=main_graph_dict,
-        speaker_transitions_type="allowed"
-    )
-
-    main_manager = GroupChatManager(
-        groupchat=main_groupchat,
-        llm_config=manager_config,
-        is_termination_msg=lambda x: "TERMINATE" in x.get("content", "")
-    )
-
-    return main_manager
 
 def setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_config):
     """注册工具并设置带有规范驱动流程的嵌套 GroupChat。"""
@@ -116,12 +92,38 @@ def setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_
         )
 
     # 设置实现子聊天组
-    implementation_manager = setup_implementation_group_chat(coder, reviewer, tester, manager_config)
+    implementation_manager = setup_implementation_group_chat(coder, reviewer, tester,user_proxy, manager_config)
     
-    # 设置主聊天组
-    main_manager = setup_main_group_chat(architect, implementation_manager, user_proxy, manager_config)
+    def prepare_task_message(recipient, messages, sender, config):
+        full_content = messages[-1].get("content", "")
+        # 如果你想把 "TODO:" 之前的内容（通常是思考过程）过滤掉
+        if "TODO:" in full_content:
+            return full_content.split("TODO:", 1)[-1].strip()
+        return full_content
+    def task_trigger_condition(sender):
+        # 1. 获取发送者（Architect）最后收发的消息
+        # 在 GroupChatManager 转发时，last_message(recipient) 是最准确的
+        try:
+            # 尝试获取最后一条消息的内容
+            last_msg_content = sender.last_message().get("content", "")
+            return "TODO" in last_msg_content
+        except Exception:
+            # 如果存在多个对话导致异常，备选方案：从消息历史列表判断
+            return False
 
-    return main_manager
+
+    user_proxy.register_nested_chats(
+        chat_queue=[
+            {
+                "recipient": implementation_manager,
+                "message": prepare_task_message,
+                "summary_method": "reflection_with_llm",
+            }
+        ],
+        trigger=task_trigger_condition
+    )
+
+    return architect
 
 def start_multi_agent_session(manager, user_proxy, user_input: str):
     """启动协作会话。"""
