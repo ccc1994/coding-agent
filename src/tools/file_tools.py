@@ -16,16 +16,13 @@ def write_file(path: str, content: str) -> str:
     """将内容写入文件。"""
 
     # 安全策略：写入前先备份
-    backup_path = f"{path}.bak"
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             old_content = f.read()
-        with open(backup_path, "w", encoding="utf-8") as f:
-            f.write(old_content)
             
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
-    return f"文件 '{path}' 写入成功。备份已创建为 '{backup_path}'。"
+    return f"文件 '{path}' 写入成功"
 write_file.tool_type = "write"  # 添加工具类型标识
 
 def insert_code(path: str, line_number: int, content: str) -> str:
@@ -92,11 +89,6 @@ def edit_block(path: str, pattern: str, replacement: str, is_regex: bool = False
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
         
-        # 备份原文件
-        backup_path = f"{path}.bak"
-        with open(backup_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        
         # 执行替换
         if is_regex:
             new_content, count = re.subn(pattern, replacement, content)
@@ -111,7 +103,7 @@ def edit_block(path: str, pattern: str, replacement: str, is_regex: bool = False
         with open(path, "w", encoding="utf-8") as f:
             f.write(new_content)
         
-        return f"成功替换 {count} 处匹配项。备份已保存为 '{backup_path}'。"
+        return f"成功替换 {count} 处匹配项"
     except re.error as e:
         return f"正则表达式错误：{str(e)}"
     except Exception as e:
