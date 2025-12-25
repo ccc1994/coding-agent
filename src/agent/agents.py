@@ -18,7 +18,8 @@ def get_agent_configs():
     return {
         "Architect": {
             "model": os.getenv("ARCHITECT_MODEL_ID") or os.getenv("PM_MODEL_ID") or default_model,
-            "system_message": load_role_prompt("Architect")
+            "system_message": load_role_prompt("Architect"),
+            # "config_list":[{"enable_thinking": True}]
         },
         "Coder": {
             "model": os.getenv("CODER_MODEL_ID") or default_model,
@@ -75,10 +76,12 @@ def create_agents(api_key: str, base_url: str):
         manager_model = os.getenv("MANAGER_MODEL_ID") or default_model
         return make_config(manager_model)
 
+    # 为 Architect 创建配置
+                
     architect = AssistantAgent(
         name="Architect",
         system_message=configs["Architect"]["system_message"],
-        llm_config=make_config(configs["Architect"]["model"]),
+        llm_config=make_config(configs["Architect"]["model"])
     )
 
     coder = AssistantAgent(
