@@ -2,9 +2,6 @@ import os
 import sys
 
 # 确保项目根目录在 sys.path 中，以解决 'src' 导入问题
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 import sys
 from dotenv import load_dotenv
 from rich.console import Console
@@ -28,7 +25,8 @@ console = Console()
 def main():
     # 1. 初始化
     load_dotenv()
-    project_root = os.path.join(os.getcwd(), "playground")
+    project_root =os.getcwd()
+    # todo 没必要?
     ensure_project_setup(project_root)
 
     # 2. 配置检查

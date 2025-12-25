@@ -8,5 +8,5 @@ fi
 # Set PYTHONPATH to current directory
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-# Run the application
-python3 -m src.main "$@"
+cd playground
+python3 ../src/main.py "$@"
