@@ -1,6 +1,7 @@
 import subprocess
 import re
 import os
+import sys
 from rich.console import Console
 from rich.prompt import Confirm
 
@@ -31,8 +32,11 @@ def analyze_command_with_llm(command: str) -> dict:
 
 只返回 JSON，格式：{{"is_blocking": true/false, "is_interactive": true/false, "reason": "原因"}}"""
 
+        # 从环境变量获取 coder 模型配置
+        model_id = os.getenv("CODER_MODEL_ID") or os.getenv("DEFAULT_MODEL_ID") or "qwen-flash-2025-07-28"
+        
         response = client.chat.completions.create(
-            model="qwen-flash-2025-07-28",  # 使用快速模型
+            model=model_id,  # 使用与 coder 相同的模型
             messages=[{"role": "user", "content": prompt}],
             temperature=0
         )
@@ -117,9 +121,80 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
         
         console.print(f"[dim]命令分析: {reason}[/dim]")
         
-        if is_blocking:
-            # 服务器命令：后台启动，等待几秒检查是否成功
-            console.print(f"[bold yellow]检测到服务器命令，将在后台启动并验证[/bold yellow]")
+        if is_interactive:
+            # 交互式命令：先在前台运行完成交互
+            console.print(f"[bold yellow]检测到交互式命令，将在前台执行完成交互[/bold yellow]")
+            console.print(f"[dim]执行: {command}[/dim]\n")
+            
+            import sys
+            import time
+            
+            # 对于交互式命令，我们需要特殊处理
+            # 1. 先在前台运行，允许用户交互
+            # 2. 如果交互后命令仍然阻塞运行，询问用户是否放入后台
+            
+            try:
+                # 运行命令并设置超时，用于检测是否会长期阻塞
+                result = subprocess.run(
+                    command,
+                    shell=True,
+                    cwd=cwd,
+                    stdin=sys.stdin,   # 允许用户输入
+                    stdout=sys.stdout, # 直接输出到终端
+                    stderr=sys.stderr, # 错误也直接输出
+                    timeout=30 if is_blocking else None  # 如果是阻塞命令，设置30秒超时
+                )
+                
+                if result.returncode == 0:
+                    return "命令执行成功。"
+                else:
+                    return f"命令执行失败，退出码：{result.returncode}"
+            except subprocess.TimeoutExpired:
+                # 命令在交互后仍然阻塞运行
+                console.print(f"\n[bold yellow]检测到命令在交互后仍然阻塞运行[/bold yellow]")
+                if Confirm.ask("是否将命令放到后台继续运行？"):
+                    # 在后台重新启动命令
+                    console.print(f"[dim]将命令放到后台继续运行: {command}[/dim]")
+                    process = subprocess.Popen(
+                        command,
+                        shell=True,
+                        cwd=cwd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        stdin=subprocess.DEVNULL  # 后台命令不需要标准输入
+                    )
+                    
+                    # 等待几秒，收集初始输出
+                    time.sleep(3)
+                    
+                    if process.poll() is None:
+                        # 收集初始输出
+                        initial_output = []
+                        try:
+                            import select
+                            if sys.platform != 'win32':
+                                readable, _, _ = select.select([process.stdout, process.stderr], [], [], 0)
+                                for stream in readable:
+                                    while True:
+                                        line = stream.readline()
+                                        if not line:
+                                            break
+                                        initial_output.append(line)
+                        except Exception as e:
+                            console.print(f"[dim]收集初始输出时出错: {e}[/dim]")
+                        
+                        console.print(f"[green]✓[/green] 命令已在后台启动（PID: {process.pid}）")
+                        initial_output_str = ''.join(initial_output) if initial_output else ""
+                        return f"命令已在后台启动（PID: {process.pid}）\n{initial_output_str}\n注意：命令将继续运行，您可以使用 'kill {process.pid}' 停止它。"
+                    else:
+                        stdout, stderr = process.communicate()
+                        return f"命令在后台启动失败\n{stdout}\n{stderr}"
+                else:
+                    return "用户取消了命令的后台运行。"
+        elif is_blocking:
+            # 非交互式但阻塞的命令：直接后台启动
+            console.print(f"[bold yellow]检测到阻塞命令，将在后台启动[/bold yellow]")
             console.print(f"[dim]执行: {command}[/dim]\n")
             
             import time
@@ -135,12 +210,10 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
             # 等待几秒，收集初始输出
             time.sleep(5)
             
-            # 检查进程是否还在运行
             if process.poll() is None:
-                # 进程仍在运行，说明服务器启动成功
+                # 收集初始输出
                 output_lines = []
                 try:
-                    # 非阻塞读取已有输出
                     import select
                     if sys.platform != 'win32':
                         readable, _, _ = select.select([process.stdout, process.stderr], [], [], 0)
@@ -154,41 +227,19 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
                 except:
                     pass
                 
-                console.print(f"\n[green]✓[/green] 服务器已在后台启动（PID: {process.pid}）")
-                console.print(f"[dim]提示：服务器将继续运行，您可以手动访问测试[/dim]\n")
-                
-                result = ''.join(output_lines) if output_lines else "服务器启动成功"
-                return f"服务器已启动（PID: {process.pid}）\n{result}\n\n注意：服务器在后台运行，测试完成后请手动停止。"
+                console.print(f"\n[green]✓[/green] 命令已在后台启动（PID: {process.pid}）")
+                result = ''.join(output_lines) if output_lines else "命令启动成功"
+                return f"命令已在后台启动（PID: {process.pid}）\n{result}\n\n注意：命令将继续运行，您可以使用 'kill {process.pid}' 停止它。"
             else:
-                # 进程已退出，可能启动失败
                 stdout, stderr = process.communicate()
                 console.print(stdout)
                 if stderr:
                     console.print(f"[red]{stderr}[/red]")
-                return f"服务器启动失败（退出码: {process.returncode}）\n{stdout}\n{stderr}"
-        
-        elif is_interactive:
-            # 交互式命令：直接使用系统调用，允许用户输入
-            console.print(f"[bold yellow]交互式命令检测到，将直接在终端执行[/bold yellow]")
-            console.print(f"[dim]执行: {command}[/dim]\n")
-            
-            import sys
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=cwd,
-                stdin=sys.stdin,   # 允许用户输入
-                stdout=sys.stdout, # 直接输出到终端
-                stderr=sys.stderr  # 错误也直接输出
-            )
-            
-            if result.returncode == 0:
-                return "命令执行成功。"
-            else:
-                return f"命令执行失败，退出码：{result.returncode}"
-        
+                return f"命令启动失败（退出码: {process.returncode}）\n{stdout}\n{stderr}"
         else:
-            # 非交互式命令：使用 Popen 实现实时输出
+            # 非交互式非阻塞命令：正常前台运行
+            console.print(f"[dim]执行命令：{command}[/dim]")
+            
             process = subprocess.Popen(
                 command,
                 shell=True,
