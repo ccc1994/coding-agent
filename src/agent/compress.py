@@ -90,7 +90,7 @@ class LLMMessagesCompressor(MessageTransform):
     6. 如果复用已经压缩好的缓存之后，没有超过大小，也不需要压缩
     """
     
-    def __init__(self, llm_config, max_tokens=10000, recent_rounds=5, compression_prompt=None, target_token=500):
+    def __init__(self, llm_config, max_tokens=10000, recent_rounds=5, compression_prompt=None, target_token=500, keep_first_n=0):
         """
         初始化 LLMMessagesCompressor。
         
@@ -100,12 +100,14 @@ class LLMMessagesCompressor(MessageTransform):
             recent_rounds: 保留最近的轮数
             compression_prompt: 压缩时使用的 prompt
             target_token: 压缩目标 token 数
+            keep_first_n: 保留最前面的消息数量，不参与压缩（默认 0）
         """
         self.llm_config = llm_config
         self.max_tokens = max_tokens
         self.recent_rounds = recent_rounds
         self.compression_prompt = compression_prompt or "你是一个专业的文本压缩专家。请将以下对话压缩到约 {target_token} 个token，保留核心信息、关键细节和重要结论。"
         self.target_token = target_token
+        self.keep_first_n = keep_first_n
         
         # 缓存压缩后的消息和原始消息索引
         self._compression_cache = {
@@ -161,7 +163,8 @@ class LLMMessagesCompressor(MessageTransform):
         if self._compression_cache["compressed_message"] is not None:
             # 复用缓存
             # 未压缩的消息是从上次压缩的位置到最新消息中除了最近几轮的部分
-            uncompressed_start_index = self._compression_cache["compressed_up_to_index"]
+            # 考虑keep_first_n参数，确保最前面的消息不参与压缩
+            uncompressed_start_index = max(self._compression_cache["compressed_up_to_index"], self.keep_first_n)
             uncompressed_end_index = len(messages) - self.recent_rounds
             
             # 计算未压缩消息的 token 数
@@ -171,8 +174,15 @@ class LLMMessagesCompressor(MessageTransform):
             else:
                 uncompressed_token_count = 0
             
-            # 计算最近几轮消息的 token 数
-            recent_messages = messages[-self.recent_rounds:]
+            # 计算最近消息的范围
+            recent_start_index = len(messages) - self.recent_rounds
+            
+            # 检查最近几轮消息的最后一条是否是工具调用结果
+            if messages and messages[-1].get("role") == "tool":
+                # 如果是工具调用结果，将其加入压缩范围，调整最近消息的起始索引
+                recent_start_index += 1
+            
+            recent_messages = messages[recent_start_index:]
             recent_token_count = self._count_total_tokens(recent_messages)
             
             # 总 token 数 = 压缩消息的 token 数 + 未压缩消息的 token 数 + 最近几轮消息的 token 数
@@ -184,7 +194,7 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 需要压缩，计算需要压缩的消息范围
             # 新的需要压缩的消息是从上次压缩的位置到最新消息中除了最近几轮的部分
-            messages_to_compress = messages[uncompressed_start_index:uncompressed_end_index]
+            messages_to_compress = messages[uncompressed_start_index:recent_start_index]
             
             if messages_to_compress:
                 # 获取tracer
@@ -222,18 +232,21 @@ class LLMMessagesCompressor(MessageTransform):
                     
                     # 更新缓存
                     self._compression_cache["compressed_message"] = {
-                        "role": "system",
+                        "role": "user",
                         "content": f"[历史对话摘要]: {compressed_text}",
                         "name": "compressed_history"
                     }
-                    self._compression_cache["compressed_up_to_index"] = uncompressed_end_index
+                    # 使用调整后的索引更新缓存
+                    self._compression_cache["compressed_up_to_index"] = recent_start_index
                     self._compression_cache["compressed_token_count"] = self._count_tokens(
                         self._compression_cache["compressed_message"]
                     )
                     
-                    # 构建最终的消息列表
-                    recent_messages = messages[-self.recent_rounds:]
-                    compressed_result = [self._compression_cache["compressed_message"]] + recent_messages
+                    # 构建最终的消息列表（使用已经计算好的recent_start_index）
+                    recent_messages = messages[recent_start_index:]
+                    # 确保包含最前面的keep_first_n条消息
+                    keep_first_messages = messages[:self.keep_first_n]
+                    compressed_result = keep_first_messages + [self._compression_cache["compressed_message"]] + recent_messages
                     
                     # 添加压缩后的属性
                     span.set_attribute("messages.compressed_count", len(compressed_result))
@@ -271,9 +284,17 @@ class LLMMessagesCompressor(MessageTransform):
                 span.set_attribute("compression.target_token", self.target_token)
                 span.set_attribute("compression.use_cache", False)
                 
-                # 压缩的消息是：所有消息中除了最近几轮的消息
-                messages_to_compress = messages[:-self.recent_rounds]
-                recent_messages = messages[-self.recent_rounds:]
+                # 计算压缩消息和最近消息的范围
+                recent_start_index = len(messages) - self.recent_rounds
+                
+                # 检查最近几轮消息的最后一条是否是工具调用结果
+                if messages and messages[-1].get("role") == "tool":
+                    # 如果是工具调用结果，将其加入压缩范围，调整最近消息的起始索引
+                    recent_start_index += 1
+                
+                # 考虑keep_first_n参数，只压缩keep_first_n之后的消息
+                messages_to_compress = messages[self.keep_first_n:recent_start_index]
+                recent_messages = messages[recent_start_index:]
                 
                 # 构建需要压缩的文本
                 text_to_compress = "\n".join([
@@ -290,18 +311,19 @@ class LLMMessagesCompressor(MessageTransform):
                 
                 # 创建压缩后的消息
                 compressed_message = {
-                    "role": "system",
+                    "role": "user",
                     "content": f"[历史对话摘要]: {compressed_text}",
                     "name": "compressed_history"
                 }
 
                 # 更新缓存
                 self._compression_cache["compressed_message"] = compressed_message
-                self._compression_cache["compressed_up_to_index"] = len(messages) - self.recent_rounds
+                self._compression_cache["compressed_up_to_index"] = recent_start_index
                 self._compression_cache["compressed_token_count"] = self._count_tokens(compressed_message)
                 
-                # 构建最终的消息列表
-                compressed_result = [compressed_message] + recent_messages
+                # 构建最终的消息列表，包含最前面的keep_first_n条消息
+                keep_first_messages = messages[:self.keep_first_n]
+                compressed_result = keep_first_messages + [compressed_message] + recent_messages
                 
                 # 添加压缩后的属性
                 span.set_attribute("messages.compressed_count", len(compressed_result))

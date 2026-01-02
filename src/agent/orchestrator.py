@@ -49,26 +49,27 @@ def setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_
     compressor = LLMMessagesCompressor(
         llm_config=manager_config,
         max_tokens=10000,  # 触发压缩的最大 token 数阈值
+        keep_first_n=1,  # 保留最前面的消息数量，不参与压缩（默认 0）
         recent_rounds=5,  # 保留最近的轮数
-        compression_prompt="你是一个专业的文本压缩专家。请将以下对话压缩到约 {target_token} 个token，保留核心信息、关键细节和重要结论。",
+        compression_prompt="你是一个专业的文本压缩专家。请将以下对话压缩到约 {target_token} 个token，保留核心信息、关键细节和重要结论, 对于已经完成的任务, 你可以一笔带过,对于工具调用及其结果,你可以忽略, 对于还未解决的报错, 你需要简单描述下什么行为导致了什么错误,发生了多少次等关键信息",
         target_token=500  # 压缩目标 token 数
     )
 
     # 创建 LLMMessagesCompressor 实例（直接实现 MessageTransform 接口）
     architectCompressor = LLMMessagesCompressor(
         llm_config=manager_config,
-        max_tokens=10000,  # 触发压缩的最大 token 数阈值
-        recent_rounds=5,  # 保留最近的轮数
+        max_tokens=5000,  # 触发压缩的最大 token 数阈值
+        keep_first_n=1,  # 保留最前面的消息数量，不参与压缩（默认 0）
+        recent_rounds=1,  # 保留最近的轮数
         compression_prompt="你是一个专业的文本压缩专家。请将以下对话压缩到约 {target_token} 个token，保留核心信息、关键细节和重要结论。",
         target_token=500  # 压缩目标 token 数
     )
 
     # 包装并注入 Agent
     context_handler = transform_messages.TransformMessages(transforms=[compressor])
-    context_handler.add_to_agent(architect)
+    context_handler.add_to_agent(implementation_manager)
     architect_context_handler = transform_messages.TransformMessages(transforms=[architectCompressor])
-    architect_context_handler.add_to_agent(implementation_manager)
-    print(f"architect 压缩器配置：{architectCompressor.__dict__}")
+    architect_context_handler.add_to_agent(architect)
 
     return architect
 
@@ -86,7 +87,7 @@ def setup_implementation_group_chat(coder, reviewer, tester, user_proxy,manager_
     implementation_groupchat = GroupChat(
         agents=[coder, reviewer, tester, user_proxy],
         messages=[],
-        max_round=30,
+        max_round=50,
         speaker_selection_method="auto",
         allowed_or_disallowed_speaker_transitions=implementation_graph_dict,
         speaker_transitions_type="allowed"
