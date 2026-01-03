@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 import logging
-
+from prompt_toolkit import prompt
+from prompt_toolkit.key_binding import KeyBindings
 
 from src.agent.manager import ensure_project_setup
 from src.agent.agents import create_agents
@@ -26,7 +27,6 @@ from openinference.instrumentation.openai import OpenAIInstrumentor
 console = Console()
 
 def main():
-    print("开始启动")
     # 1. 初始化
     load_dotenv()
 
@@ -42,7 +42,6 @@ def main():
     trace.set_tracer_provider(tracer_provider)
     OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
     AutogenInstrumentor().instrument()
-    print("✅ Phoenix 可观测性已启动，正在监听 AutoGen 任务...")
     project_root =os.getcwd()
     # todo 没必要?
     ensure_project_setup(project_root)
@@ -70,7 +69,7 @@ def main():
         "[dim]由 AutoGen 编排 | 由 DashScope 提供动力[/dim]",
         border_style="bright_blue"
     ))
-    console.print("[yellow]输入 'exit' 退出。输入 '/settings' 查看设置。规范驱动开发已激活。[/yellow]\n")
+    console.print("[yellow]输入 'exit' 退出, alt + enter 换行。输入 '/settings' 查看设置。[/yellow]\n")
 
     # 设置状态
     settings = {"verbose_llm": False}
@@ -98,7 +97,7 @@ def main():
     # 5. 交互循环
     while True:
         try:
-            user_input = console.input("[bold green]>[/bold green] ")
+            user_input = get_advanced_input()
             
             if user_input.lower() in ["exit", "quit"]:
                 console.print("[yellow]正在关闭... 再见！[/yellow]")
@@ -121,5 +120,20 @@ def main():
         except Exception as e:
             console.print(f"[bold red]发生意外错误：[/bold red] {e}")
 
+def get_advanced_input():
+    kb = KeyBindings()
+
+    # 绑定 Alt+Enter 为换行符 (在终端中通常映射为 Esc+Enter)
+    @kb.add('escape', 'enter')
+    def _(event):
+        event.current_buffer.insert_text('\n')
+
+    # 绑定普通的 Enter 为提交
+    @kb.add('enter')
+    def _(event):
+        # 如果当前内容为空，或者你定义了某些条件，可以不提交
+        event.current_buffer.validate_and_handle()
+
+    return prompt("> ", key_bindings=kb, multiline=True)
 if __name__ == "__main__":
     main()

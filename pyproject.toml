@@ -28,6 +28,7 @@ dependencies = [
     "llama-index-vector-stores-chroma>=0.1.10",
     "tree-sitter>=0.23.2",
     "tree-sitter-python>=0.23.6",
+    "prompt-toolkit>=3.0.52",
 ]
 
 [tool.setuptools.packages.find]
