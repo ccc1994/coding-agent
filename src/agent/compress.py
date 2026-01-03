@@ -161,7 +161,7 @@ class LLMMessagesCompressor(MessageTransform):
         if not messages:
             return messages
             
-        # print(f"[{getattr(self, 'agent_name', 'Agent')}] 检查上下文压缩...")
+        print(f"[{getattr(self, 'agent_name', 'Agent')}] 检查上下文压缩...")
         
         # 1. 计算当前消息的总 token 数
         # 如果有缓存的压缩消息，计算方式是：压缩消息的 token 数 + 未压缩消息的 token 数
@@ -186,6 +186,11 @@ class LLMMessagesCompressor(MessageTransform):
             # 如果起始消息是 tool，我们必须向前追溯到起始的 assistant 消息
             while recent_start_index > self.keep_first_n and messages[recent_start_index].get("role") == "tool":
                 recent_start_index -= 1
+
+            # 只显示消息的角色和内容前50个字符，避免输出过长
+            # msg = messages[recent_start_index]
+            # msg_content = msg.get("content", "")[:50] + "..." if len(msg.get("content", "")) > 50 else msg.get("content", "")
+            # print(f"messageCount: {len(messages)}, recent_start_index: {recent_start_index}, recent_start_msg: {{'role': '{msg.get('role')}', 'content': '{msg_content}'}}")
             
             recent_messages = messages[recent_start_index:]
             recent_token_count = self._count_total_tokens(recent_messages)
@@ -195,16 +200,19 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 如果总 token 数未超过阈值，直接返回原始消息
             if total_token_count <= self.max_tokens:
-                # print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
+                print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
                 return messages
             
-            # print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
+            print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
             
             # 需要压缩，计算需要压缩的消息范围
             # 新的需要压缩的消息是从上次压缩的位置到最新消息中除了最近几轮的部分
             messages_to_compress = messages[uncompressed_start_index:recent_start_index]
-            
-            if messages_to_compress:
+
+            if not messages_to_compress or recent_start_index <=1:
+                print(f"compress failed, no message to compress, recent_start_index:{recent_start_index}")
+                return messages
+            else: 
                 # 获取tracer
                 tracer = trace.get_tracer(__name__)
                 
@@ -274,10 +282,10 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 如果总 token 数未超过阈值，直接返回原始消息
             if total_token_count <= self.max_tokens:
-                # print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
+                print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
                 return messages
             
-            # print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
+            print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
             
             # 需要压缩，计算需要压缩的消息范围
             if len(messages) <= self.recent_rounds:
@@ -305,8 +313,16 @@ class LLMMessagesCompressor(MessageTransform):
                 while recent_start_index > self.keep_first_n and messages[recent_start_index].get("role") == "tool":
                     recent_start_index -= 1
                 
+                # 只显示消息的角色和内容前50个字符，避免输出过长
+                msg = messages[recent_start_index]
+                msg_content = msg.get("content", "")[:50] + "..." if len(msg.get("content", "")) > 50 else msg.get("content", "")
+                print(f"messageCount: {len(messages)}, recent_start_index: {recent_start_index}, recent_start_msg: {{'role': '{msg.get('role')}', 'content': '{msg_content}'}}")
+                
                 # 考虑keep_first_n参数，只压缩keep_first_n之后的消息
                 messages_to_compress = messages[self.keep_first_n:recent_start_index]
+                if not messages_to_compress or recent_start_index <=1:
+                    print(f"compress failed, no message to compress, recent_start_index:{recent_start_index}")
+                    return messages
                 recent_messages = messages[recent_start_index:]
                 
                 # 构建需要压缩的文本

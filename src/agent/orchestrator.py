@@ -6,6 +6,7 @@ from autogen.agentchat.contrib.capabilities.transforms import TextMessageCompres
 from autogen.agentchat.contrib.capabilities import transform_messages
 from src.agent.compress import LLMTextCompressor, LLMMessagesCompressor
 import copy
+import os
 
 def setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_config):
     """注册工具并设置带有规范驱动流程的嵌套 GroupChat。"""
@@ -48,7 +49,7 @@ def setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_
 
     compressor = LLMMessagesCompressor(
         llm_config=manager_config,
-        max_tokens=10000,  
+        max_tokens=int(os.getenv("COMPRESS_MAX_TOKENS_IMPLEMENTATION", "10000")),  
         keep_first_n=1,  
         recent_rounds=5,  
         compression_prompt="""
@@ -61,7 +62,7 @@ def setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_
 
     architectCompressor = LLMMessagesCompressor(
         llm_config=manager_config,
-        max_tokens=100000,  
+        max_tokens=int(os.getenv("COMPRESS_MAX_TOKENS_ARCHITECT", "30000")),  
         keep_first_n=1,  
         recent_rounds=2,  
         compression_prompt="""你是一个专业的大模型对话压缩专家, 下面是 architect 正在调研项目或者是正在推进开发计划。请将以下对话压缩到约 {target_token} 个token。
@@ -104,7 +105,7 @@ def setup_implementation_group_chat(coder, reviewer, tester, user_proxy, manager
         "Rules:\n"
         "1. If code is written, select Reviewer to check.\n"
         "2. If Reviewer found bugs or errors, select Coder to fix.\n"
-        "3. If Reviewer passed, select Tester.\n"
+        "3. If Reviewer APPROVE, select Tester.\n"
         "4. ONLY return the name of the next agent. DO NOT perform any tasks yourself."
     )
 
