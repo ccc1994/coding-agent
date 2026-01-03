@@ -1,4 +1,4 @@
-# AI 编码助手 (Coding Agent)
+# AI 编码助手 CHAOS
 
 > 🚀 个人练手项目 - 基于多 Agent 协作的智能编码助手
 
@@ -12,11 +12,7 @@
 - **AutoGen 0.10.3** - 微软开源的多 Agent 编排框架
 - **Python 3.x** - 主要开发语言
 - **Rich** - 终端 UI 美化库
-
-### LLM 服务
-- **阿里云 DashScope** - 提供 Qwen 系列大模型
-  - Architect/Coder/Reviewer/Tester: `qwen-plus-2025-07-28`
-  - GroupChatManager: `qwen-flash-2025-07-28` (轻量级模型，降低成本)
+- **Phoenix** - AI 可观测性平台
 
 ### 工具集成
 - **文件操作**: 读写、编辑、搜索、目录管理
@@ -74,6 +70,8 @@ graph_dict = {
 2. **轻量级 Manager 模型**: 使用 qwen-flash，成本降低 5.3 倍
 3. **批量工具调用**: 减少对话轮次，降低 Token 消耗
 4. **错误循环检测**: 自动识别重复错误，避免无效重试
+5. **智能上下文压缩**: 仅压缩必要的历史对话，保留关键信息，显著降低 Token 消耗
+6. **缓存复用机制**: 避免重复压缩相同内容，减少不必要的 LLM 调用
 
 ## 使用方式
 
@@ -107,8 +105,9 @@ pip install -r requirements.txt
 ### 4. 交互命令
 
 - **普通对话**: 直接输入需求，如 "帮我创建一个 React 项目"
-- **查看设置**: 输入 `/settings` 切换 LLM 日志显示
+- **多行输入**: 使用 `Alt+Enter` 换行，`Enter` 提交完整需求
 - **退出系统**: 输入 `exit` 或 `quit`
+- **上下文控制**: 系统会自动压缩历史对话，保留最近几轮和最前面的 N 条消息（可配置）
 
 ### 5. 工作流示例
 
@@ -134,6 +133,12 @@ pip install -r requirements.txt
 - [x] 错误循环检测与熔断
 - [x] 正则表达式代码编辑
 - [x] 版本控制集成
+- [x] 智能上下文压缩（支持 `keep_first_n` 参数，保留最前面 N 条消息不参与压缩，优化 Token 消耗）
+- [x] 工具调用消息对完整性保护（确保 `assistant` 与 `tool` 消息成对出现，避免 API 错误）
+- [x] 多行输入支持（Alt+Enter 换行，Enter 提交）
+- [x] 美化控制台界面（ASCII 艺术字、颜色渐变）
+- [x] OpenTelemetry 分布式跟踪
+- [x] Phoenix 可观测性集成
 
 ### 🚧 待优化
 
@@ -147,10 +152,17 @@ pip install -r requirements.txt
 
 ```
 coding-agent/
+├── .agent/                    # Agent 工作空间配置
+│   ├── rules/                 # 规则配置
+│   │   └── security-rule.md   # 安全规则
+│   └── workflows/             # 工作流配置
+│       └── instructions.md    # 指令模板
 ├── src/
 │   ├── agent/
 │   │   ├── agents.py          # Agent 定义和配置
 │   │   ├── orchestrator.py    # FSM 编排逻辑
+│   │   ├── compress.py        # 上下文压缩功能
+│   │   ├── state.py           # 状态管理
 │   │   ├── prompts/           # Agent 提示词
 │   │   │   ├── architect.md
 │   │   │   ├── coder.md
@@ -158,16 +170,45 @@ coding-agent/
 │   │   │   └── tester.md
 │   │   ├── manager.py         # 项目管理
 │   │   └── context.py         # 上下文注入
+│   ├── cli/
+│   │   └── banner.py          # 控制台美化
 │   ├── tools/
 │   │   ├── file_tools.py      # 文件操作工具
 │   │   ├── shell_tools.py     # Shell 执行工具
 │   │   └── git_tools.py       # Git 版本控制工具
 │   └── main.py                # 主入口
-├── playground/                # Agent 工作目录
 ├── .env                       # 环境变量配置
+├── .gitignore                 # Git 忽略文件
+├── phoenix.sh                 # Phoenix 启动脚本
+├── pyproject.toml             # Python 项目配置
+├── README.md                  # 项目文档
 ├── requirements.txt           # Python 依赖
-└── run.sh                     # 启动脚本
+├── run.sh                     # 启动脚本
+├── specs.md                   # 项目规范
+└── uv.lock                    # 依赖锁定文件
 ```
+
+## 可观测性
+
+### Phoenix 集成
+
+项目集成了 **Phoenix** 可观测性平台，用于监控和分析 Agent 行为：
+
+- **启动方式**: 运行 `./phoenix.sh` 启动 Phoenix 服务器
+- **访问地址**: http://localhost:6006
+- **监控指标**:
+  - 上下文压缩效果（消息数量、token数、压缩率）
+  - LLM 调用延迟和成本
+  - Agent 交互流程和状态转换
+  - 工具调用统计和执行结果
+
+### OpenTelemetry 跟踪
+
+系统使用 **OpenTelemetry** 进行分布式跟踪：
+- 自动记录所有 LLM 调用和 Agent 交互
+- 支持自定义 Span 和属性
+- 仅在实际发生上下文压缩时记录 `llm_context_compression` 跟踪节点
+- 可导出到其他 APM 系统进行进一步分析
 
 ## 安全策略
 
