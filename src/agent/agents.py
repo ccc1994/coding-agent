@@ -119,7 +119,7 @@ def create_agents(api_key: str, base_url: str):
             register_function(
                 tool,
                 caller=coder,
-                executor=user_proxy,
+                executor=coder,
                 name=tool.__name__,
                 description=tool.__doc__
             )
@@ -129,7 +129,7 @@ def create_agents(api_key: str, base_url: str):
             register_function(
                 tool,
                 caller=architect,
-                executor=architect,  # 改为architect自己执行，避免user_proxy权限问题
+                executor=user_proxy, 
                 name=tool.__name__,
                 description=tool.__doc__
             )
@@ -139,24 +139,14 @@ def create_agents(api_key: str, base_url: str):
             register_function(
                 tool,
                 caller=coder,
-                executor=user_proxy,
+                executor=coder,
                 name=tool.__name__,
                 description=tool.__doc__
             )
             register_function(
                 tool,
                 caller=reviewer,
-                executor=user_proxy,
-                name=tool.__name__,
-                description=tool.__doc__
-            )
-
-        # 3. 为 Coder 注册 Git 工具（版本控制）
-        for tool in get_git_tools():
-            register_function(
-                tool,
-                caller=coder,
-                executor=user_proxy,
+                executor=reviewer,
                 name=tool.__name__,
                 description=tool.__doc__
             )
@@ -166,7 +156,7 @@ def create_agents(api_key: str, base_url: str):
             register_function(
                 tool,
                 caller=tester,
-                executor=user_proxy,
+                executor=tester,
                 name=tool.__name__,
                 description=tool.__doc__
             )

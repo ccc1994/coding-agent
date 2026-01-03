@@ -108,6 +108,7 @@ class LLMMessagesCompressor(MessageTransform):
         self.compression_prompt = compression_prompt or "你是一个专业的文本压缩专家。请将以下对话压缩到约 {target_token} 个token，保留核心信息、关键细节和重要结论。"
         self.target_token = target_token
         self.keep_first_n = keep_first_n
+        self.agent_name = "Agent" # 默认值，由 orchestrator 设置
         
         # 缓存压缩后的消息和原始消息索引
         self._compression_cache = {
@@ -130,8 +131,10 @@ class LLMMessagesCompressor(MessageTransform):
             token 数估算值
         """
         content = message.get("content", "")
-        # 粗略估计：1 个 token 约等于 4 个字符
-        return len(content) // 4
+        # 粗略估计：1 个 token 约等于 3 个汉字或 4 个英文单词
+        # 这里使用更通用的估算方式：(中文数 * 0.6 + 英文单词数 * 1.3)
+        # 简化版：字符数 // 3 (对于混合文本较实用)
+        return len(content) // 3
     
     def _count_total_tokens(self, messages):
         """
@@ -157,6 +160,8 @@ class LLMMessagesCompressor(MessageTransform):
         """
         if not messages:
             return messages
+            
+        print(f"[{getattr(self, 'agent_name', 'Agent')}] 检查上下文压缩...")
         
         # 1. 计算当前消息的总 token 数
         # 如果有缓存的压缩消息，计算方式是：压缩消息的 token 数 + 未压缩消息的 token 数
@@ -190,7 +195,10 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 如果总 token 数未超过阈值，直接返回原始消息
             if total_token_count <= self.max_tokens:
+                print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
                 return messages
+            
+            print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
             
             # 需要压缩，计算需要压缩的消息范围
             # 新的需要压缩的消息是从上次压缩的位置到最新消息中除了最近几轮的部分
@@ -264,7 +272,10 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 如果总 token 数未超过阈值，直接返回原始消息
             if total_token_count <= self.max_tokens:
+                print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
                 return messages
+            
+            print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
             
             # 需要压缩，计算需要压缩的消息范围
             if len(messages) <= self.recent_rounds:
