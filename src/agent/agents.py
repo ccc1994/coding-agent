@@ -3,6 +3,7 @@ from autogen import AssistantAgent, UserProxyAgent, register_function
 from src.tools.file_tools import get_file_tools
 from src.tools.shell_tools import get_shell_tools
 from src.tools.git_tools import get_git_tools
+import warnings
 
 def load_role_prompt(role: str) -> str:
     """从 prompts 目录加载特定角色的提示词。"""
@@ -111,61 +112,63 @@ def create_agents(api_key: str, base_url: str):
         is_termination_msg=lambda x: "TERMINATE" in (x.get("content", "") or "").upper()
     )
 
-    # 1. 为 Coder 注册文件工具
-    for tool in get_file_tools():
-        register_function(
-            tool,
-            caller=coder,
-            executor=user_proxy,
-            name=tool.__name__,
-            description=tool.__doc__
-        )
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=".*is being overridden.*")
+        # 1. 为 Coder 注册文件工具
+        for tool in get_file_tools():
+            register_function(
+                tool,
+                caller=coder,
+                executor=user_proxy,
+                name=tool.__name__,
+                description=tool.__doc__
+            )
 
-    # 2. 为 Architect 注册文件工具（读取目录和文件内容）
-    for tool in get_file_tools("read"):
-        register_function(
-            tool,
-            caller=architect,
-            executor=architect,  # 改为architect自己执行，避免user_proxy权限问题
-            name=tool.__name__,
-            description=tool.__doc__
-        )
+        # 2. 为 Architect 注册文件工具（读取目录和文件内容）
+        for tool in get_file_tools("read"):
+            register_function(
+                tool,
+                caller=architect,
+                executor=architect,  # 改为architect自己执行，避免user_proxy权限问题
+                name=tool.__name__,
+                description=tool.__doc__
+            )
 
-    # 2. 为 Coder 注册 Shell 工具（用于运行构建、测试等命令）
-    for tool in get_shell_tools():
-        register_function(
-            tool,
-            caller=coder,
-            executor=user_proxy,
-            name=tool.__name__,
-            description=tool.__doc__
-        )
-        register_function(
-            tool,
-            caller=reviewer,
-            executor=user_proxy,
-            name=tool.__name__,
-            description=tool.__doc__
-        )
+        # 2. 为 Coder 注册 Shell 工具（用于运行构建、测试等命令）
+        for tool in get_shell_tools():
+            register_function(
+                tool,
+                caller=coder,
+                executor=user_proxy,
+                name=tool.__name__,
+                description=tool.__doc__
+            )
+            register_function(
+                tool,
+                caller=reviewer,
+                executor=user_proxy,
+                name=tool.__name__,
+                description=tool.__doc__
+            )
 
-    # 3. 为 Coder 注册 Git 工具（版本控制）
-    for tool in get_git_tools():
-        register_function(
-            tool,
-            caller=coder,
-            executor=user_proxy,
-            name=tool.__name__,
-            description=tool.__doc__
-        )
+        # 3. 为 Coder 注册 Git 工具（版本控制）
+        for tool in get_git_tools():
+            register_function(
+                tool,
+                caller=coder,
+                executor=user_proxy,
+                name=tool.__name__,
+                description=tool.__doc__
+            )
 
-    # 4. 为 Tester 注册 Shell 工具
-    for tool in get_shell_tools():
-        register_function(
-            tool,
-            caller=tester,
-            executor=user_proxy,
-            name=tool.__name__,
-            description=tool.__doc__
-        )
+        # 4. 为 Tester 注册 Shell 工具
+        for tool in get_shell_tools():
+            register_function(
+                tool,
+                caller=tester,
+                executor=user_proxy,
+                name=tool.__name__,
+                description=tool.__doc__
+            )
 
     return architect, coder, reviewer, tester, user_proxy, make_manager_config()

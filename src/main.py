@@ -3,10 +3,12 @@ import sys
 
 # 确保项目根目录在 sys.path 中，以解决 'src' 导入问题
 import sys
+import pyfiglet
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
-import logging
+from rich.text import Text
+from rich.color import Color
 from prompt_toolkit import prompt
 from prompt_toolkit.key_binding import KeyBindings
 
@@ -63,36 +65,8 @@ def main():
             console.print(f"[bold red]系统初始化出错：[/bold red] {e}")
             sys.exit(1)
 
-    # 4. 欢迎词
-    console.print(Panel.fit(
-        "[bold cyan]AI 编码助手 (高级多 Agent 系统)[/bold cyan]\n"
-        "[dim]由 AutoGen 编排 | 由 DashScope 提供动力[/dim]",
-        border_style="bright_blue"
-    ))
-    console.print("[yellow]输入 'exit' 退出, alt + enter 换行。输入 '/settings' 查看设置。[/yellow]\n")
 
-    # 设置状态
-    settings = {"verbose_llm": False}
-    
-    def toggle_verbose_logging():
-        settings["verbose_llm"] = not settings["verbose_llm"]
-        if settings["verbose_llm"]:
-            logging.basicConfig(level=logging.INFO, force=True)
-            os.environ["AUTOGEN_VERBOSE"] = "1"
-            console.print("[green]✓[/green] 已启用 LLM 输入日志（详细模式）")
-        else:
-            logging.basicConfig(level=logging.WARNING, force=True)
-            os.environ["AUTOGEN_VERBOSE"] = "0"
-            console.print("[yellow]✓[/yellow] 已禁用 LLM 输入日志（简洁模式）")
-    
-    def show_settings():
-        console.print("\n[bold cyan]⚙️  设置[/bold cyan]")
-        console.print(f"1. LLM 输入日志: [{'green' if settings['verbose_llm'] else 'red'}]{'开启' if settings['verbose_llm'] else '关闭'}[/]")
-        console.print("\n[dim]输入数字切换设置，或按回车返回[/dim]")
-        choice = console.input("[bold cyan]>[/bold cyan] ").strip()
-        if choice == "1":
-            toggle_verbose_logging()
-            show_settings()
+    print_banner()
 
     # 5. 交互循环
     while True:
@@ -111,7 +85,7 @@ def main():
             full_prompt = f"{l1_context}\n[用户需求]\n{user_input}"
 
             # 启动会话
-            console.print(f"\n[bold blue]正在启动群聊...[/bold blue]\n")
+            console.print(f"\n[bold blue]正在启动...[/bold blue]\n")
             start_multi_agent_session(manager, user_proxy, full_prompt)
 
         except KeyboardInterrupt:
@@ -135,5 +109,48 @@ def get_advanced_input():
         event.current_buffer.validate_and_handle()
 
     return prompt("> ", key_bindings=kb, multiline=True)
+
+def print_banner():
+    # 1. 生成艺术字
+    f = pyfiglet.Figlet(font='slant')
+    chaos_text = f.renderText('CHAOS')
+    # 过滤空行并确保内容存在
+    lines = [line for line in chaos_text.splitlines() if line.strip()]
+
+    if not lines:
+        return
+
+    # 2. 创建渐变色
+    gradient_text = Text()
+    num_lines = len(lines)
+
+    for i, line in enumerate(lines):
+        # 线性插值计算颜色 (紫色 -> 青色)
+        ratio = i / (num_lines - 1) if num_lines > 1 else 0
+        r = int(138 + (0 - 138) * ratio)
+        g = int(43 + (255 - 43) * ratio)
+        b = int(226 + (255 - 226) * ratio)
+        
+        # 应用颜色
+        gradient_text.append(line + "\n", style=f"bold rgb({r},{g},{b})")
+
+    banner_panel = Panel.fit(
+        gradient_text,
+        border_style="bright_blue",
+        padding=(1, 5),
+        title="[bold white]v0.0.1[/]", 
+        title_align="right",
+        subtitle="[italic grey50]Powered By AutoGen & LlamaIndex[/]", 
+        subtitle_align="center"
+    )
+
+    # 4. 打印展示
+    console.print(banner_panel)
+    
+    # 辅助提示
+    console.print(
+        "\n[yellow]➜[/][white] 输入 [bold]'exit'[/] 退出 | [bold]Alt+Enter[/] 换行 | [bold]Enter[/] 提交[/]\n"
+    )
+
 if __name__ == "__main__":
     main()

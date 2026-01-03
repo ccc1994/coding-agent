@@ -1158,6 +1158,7 @@ dependencies = [
     { name = "pyautogen", version = "0.9", source = { registry = "https://bytedpypi.byted.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyautogen", version = "0.10.0", source = { registry = "https://bytedpypi.byted.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pydantic" },
+    { name = "pyfiglet" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "rich" },
@@ -1184,6 +1185,7 @@ requires-dist = [
     { name = "prompt-toolkit", specifier = ">=3.0.52" },
     { name = "pyautogen" },
     { name = "pydantic" },
+    { name = "pyfiglet", specifier = ">=1.0.4" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "rich" },
@@ -5256,6 +5258,15 @@ wheels = [
     { url = "https://bytedpypi.byted.org/packages/pydantic-core/pydantic_core-2.41.5-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:a668ce24de96165bb239160b3d854943128f4334822900534f2fe947930e5770" },
     { url = "https://bytedpypi.byted.org/packages/pydantic-core/pydantic_core-2.41.5-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:f14f8f046c14563f8eb3f45f499cc658ab8d10072961e07225e507adb700e93f" },
     { url = "https://bytedpypi.byted.org/packages/pydantic-core/pydantic_core-2.41.5-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:56121965f7a4dc965bff783d70b907ddf3d57f6eba29b6d2e5dabfaf07799c51" },
+]
+
+[[package]]
+name = "pyfiglet"
+version = "1.0.4"
+source = { registry = "https://bytedpypi.byted.org/simple" }
+sdist = { url = "https://bytedpypi.byted.org/packages/pyfiglet/pyfiglet-1.0.4.tar.gz", hash = "sha256:db9c9940ed1bf3048deff534ed52ff2dafbbc2cd7610b17bb5eca1df6d4278ef" }
+wheels = [
+    { url = "https://bytedpypi.byted.org/packages/pyfiglet/pyfiglet-1.0.4-py3-none-any.whl", hash = "sha256:65b57b7a8e1dff8a67dc8e940a117238661d5e14c3e49121032bd404d9b2b39f" },
 ]
 
 [[package]]
