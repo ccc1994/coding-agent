@@ -104,7 +104,7 @@ def setup_implementation_group_chat(coder, reviewer, tester, user_proxy, manager
         "Rules:\n"
         "1. If code is written, select Reviewer to check.\n"
         "2. If Reviewer found bugs or errors, select Coder to fix.\n"
-        "3. If Reviewer APPROVE, select Tester.\n"
+        "3. If Reviewer replay APPROVE, select Tester.\n"
         "4. ONLY return the name of the next agent. DO NOT perform any tasks yourself."
     )
 
@@ -121,6 +121,12 @@ def setup_implementation_group_chat(coder, reviewer, tester, user_proxy, manager
         # 检查点：如果上一条消息发起了工具调用
         if last_msg["role"] == "tool":
             return last_speaker
+        
+        if last_speaker is reviewer:
+            if "APPROVE" in last_content:
+                # 可以在这里打印日志方便调试
+                print(">> Detected APPROVE, forcing transition to Tester.")
+                return tester
 
         # 如果没有工具调用，则使用传统的 'auto' 逻辑 (即让 Manager LLM 决定)
         return "auto"
