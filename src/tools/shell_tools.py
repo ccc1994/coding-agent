@@ -33,7 +33,7 @@ def analyze_command_with_llm(command: str) -> dict:
 只返回 JSON，格式：{{"is_blocking": true/false, "is_interactive": true/false, "reason": "原因"}}"""
 
         # 从环境变量获取 coder 模型配置
-        model_id = os.getenv("CODER_MODEL_ID") or os.getenv("DEFAULT_MODEL_ID") or "qwen-flash-2025-07-28"
+        model_id = os.getenv("CODER_MODEL_ID")
         
         response = client.chat.completions.create(
             model=model_id,  # 使用与 coder 相同的模型

@@ -16,25 +16,21 @@ def load_role_prompt(role: str) -> str:
     return ""
 
 def get_agent_configs():
-    """从 .env 加载特定 Agent 的配置，包含回退机制。"""
-    default_model = os.getenv("DEFAULT_MODEL_ID")
-    
     return {
         "Architect": {
-            "model": os.getenv("ARCHITECT_MODEL_ID") or default_model,
+            "model": os.getenv("ARCHITECT_MODEL_ID"),
             "system_message": load_role_prompt("Architect"),
-            # "config_list":[{"enable_thinking": True}]
         },
         "Coder": {
-            "model": os.getenv("CODER_MODEL_ID") or default_model,
+            "model": os.getenv("CODER_MODEL_ID"),
             "system_message": load_role_prompt("Coder")
         },
         "Reviewer": {
-            "model": os.getenv("REVIEWER_MODEL_ID") or default_model,
+            "model": os.getenv("REVIEWER_MODEL_ID"),
             "system_message": load_role_prompt("Reviewer")
         },
         "Tester": {
-            "model": os.getenv("TESTER_MODEL_ID") or default_model,
+            "model": os.getenv("TESTER_MODEL_ID"),
             "system_message": load_role_prompt("Tester")
         }
     }
@@ -77,8 +73,7 @@ def create_agents(api_key: str, base_url: str):
     
     def make_manager_config():
         """为 GroupChatManager 创建轻量级配置，使用最便宜的模型"""
-        default_model = os.getenv("DEFAULT_MODEL_ID")
-        manager_model = os.getenv("MANAGER_MODEL_ID") or default_model
+        manager_model = os.getenv("GENERAL_MODEL_ID")
         return make_config(manager_model)
 
     # 为 Architect 创建配置

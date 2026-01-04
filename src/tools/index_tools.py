@@ -23,7 +23,7 @@ def _initialize_settings():
     api_key = os.getenv("DASHSCOPE_API_KEY")
     base_url = os.getenv("DASHSCOPE_BASE_URL")
     embed_model = os.getenv("EMBEDDING_MODEL_ID")
-    llm_model = os.getenv("DEFAULT_MODEL_ID")
+    llm_model = os.getenv("GENERAL_MODEL_ID")
     
     if not api_key:
         logger.error("DASHSCOPE_API_KEY 未设置，无法初始化 LlamaIndex")

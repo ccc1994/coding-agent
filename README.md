@@ -41,8 +41,7 @@ User → Architect → Coder → Reviewer → Tester → User
 
 2. **Coder (开发工程师)**
    - 执行代码编写和文件操作
-   - 拥有完整工具集：文件、Shell、Git、LSP、代码搜索
-   - 支持批量工具调用，减少对话轮次
+   - 拥有完整工具集：文件、Shell、LSP、代码搜索
 
 3. **Reviewer (代码审核专家)**
    - 检查代码质量、安全性、一致性
@@ -75,13 +74,14 @@ Architect -> [Coder, Reviewer, Test], 其中 [Coder, Reviewer, Test] 是一个 N
 DASHSCOPE_API_KEY=your_api_key_here
 DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 
-DEFAULT_MODEL_ID=qwen-plus
+# 完成一些简单任务, 速度较快的模型 
+GENERAL_MODEL_ID=qwen-flash-2025-07-28
 
+# 专用模型
 ARCHITECT_MODEL_ID=qwen-plus-2025-07-28
 CODER_MODEL_ID=qwen3-coder-plus
 REVIEWER_MODEL_ID=qwen3-coder-plus
 TESTER_MODEL_ID=qwen3-coder-plus
-MANAGER_MODEL_ID=qwen-flash-2025-07-28
 EMBEDDING_MODEL_ID=text-embedding-v4
 ```
 
@@ -124,7 +124,7 @@ uv sync
 
 - [x] FSM 状态机编排, 通过大模型智能选择下一个 Speaker
 - [x] 轻量级 Manager 模型（成本优化）
-- [x] 完整工具集（文件、Shell、Git）
+- [x] 完整工具集（文件、Shell、RAG、LSP）
 - [x] 实时命令输出流
 - [x] 交互式命令支持（npx, npm init）
 - [x] 错误循环检测与熔断
