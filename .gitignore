@@ -145,4 +145,5 @@ cython_debug/
 # Coding Agent storage and playground
 .chaos/
 playground/
+empty/
 .env

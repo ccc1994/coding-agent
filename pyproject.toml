@@ -41,6 +41,7 @@ dependencies = [
     "python-ripgrep>=0.0.8",
     "ripgrep>=15.0.0",
     "mcp>=1.25.0",
+    "pexpect>=4.9.0",
 ]
 
 [tool.setuptools.packages.find]
