@@ -40,19 +40,33 @@ def main():
     # 1. 初始化
     load_dotenv()
     
-    resource = Resource.create({
-        "service.name": "CodingAgent",  # 这个就是 Phoenix 中显示的 Project Name
-        "environment": "development"
-    })
-    endpoint = "http://127.0.0.1:6006/v1/traces"
-    tracer_provider = TracerProvider(resource=resource)
-    tracer_provider.add_span_processor(
-        BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint))
-    )
-    trace.set_tracer_provider(tracer_provider)
-    OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
-    patch_autogen_instrumentation() # Apply the patch
-    AutogenInstrumentor().instrument()
+    # 检查 Phoenix 是否可用
+    import socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.5)
+        # 尝试连接 Phoenix 端口
+        is_phoenix_up = sock.connect_ex(('127.0.0.1', 6006)) == 0
+        sock.close()
+        
+        if is_phoenix_up:
+            resource = Resource.create({
+                "service.name": "CodingAgent",  # 这个就是 Phoenix 中显示的 Project Name
+                "environment": "development"
+            })
+            endpoint = "http://127.0.0.1:6006/v1/traces"
+            tracer_provider = TracerProvider(resource=resource)
+            tracer_provider.add_span_processor(
+                BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint))
+            )
+            trace.set_tracer_provider(tracer_provider)
+            OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
+            patch_autogen_instrumentation() # Apply the patch
+            AutogenInstrumentor().instrument()
+        else:
+            console.print("[bold red]错误：未检测到 Phoenix (127.0.0.1:6006)，跳过 OpenInference 初始化。[/bold red]")
+    except Exception as e:
+        console.print(f"[bold red]检查 Phoenix 时发生错误: {e}，跳过 OpenInference 初始化。[/bold red]")
     
     project_root =os.getcwd()
     config.project_root = project_root
