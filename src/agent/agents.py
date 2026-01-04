@@ -81,32 +81,37 @@ def create_agents(api_key: str, base_url: str):
     architect = AssistantAgent(
         name="Architect",
         system_message=configs["Architect"]["system_message"],
-        llm_config=make_config(configs["Architect"]["model"])
+        llm_config=make_config(configs["Architect"]["model"]),
+        code_execution_config=False
     )
 
     coder = AssistantAgent(
         name="Coder",
         system_message=configs["Coder"]["system_message"],
         llm_config=make_config(configs["Coder"]["model"]),
+        code_execution_config=False
     )
 
     reviewer = AssistantAgent(
         name="Reviewer",
         system_message=configs["Reviewer"]["system_message"],
         llm_config=make_config(configs["Reviewer"]["model"]),
+        code_execution_config=False
     )
 
     tester = AssistantAgent(
         name="Tester",
         system_message=configs["Tester"]["system_message"],
         llm_config=make_config(configs["Tester"]["model"]),
+        code_execution_config=False
     )
 
     user_proxy = UserProxyAgent(
         name="User",
         human_input_mode="NEVER",
         max_consecutive_auto_reply=30,
-        is_termination_msg=lambda x: "TERMINATE" in (x.get("content", "") or "").upper()
+        is_termination_msg=lambda x: "TERMINATE" in (x.get("content", "") or "").upper(),
+        code_execution_config=False
     )
 
     with warnings.catch_warnings():

@@ -28,21 +28,21 @@ The Output MUST follow this exact Markdown format:
 ## A. Project Introduction
 [Brief description of what the project is, its goal, and value proposition]
 
-## B. Technology Stack
+## B. Architectural Principles
+[Brief description of the architectural principles followed by the project, such as microservices, monolithic architecture, event-driven, etc.]
+
+## C. Technology Stack
 [List of languages, frameworks, core libraries, and tools used]
 
-## C. Project Structure & Modules
+## D. Project Structure & Modules
 [Hierarchical list or description of folders/files and their specific responsibilities]
-
-## D. Development Standards & Rules
-[Coding conventions, specific "Do's and Don'ts", security rules, and workflow requirements identified in the conversation]
 
 ---
 **Instructions:**
 - If the Current Summary is empty, build it entirely from the Conversation.
 - If information is conflicting, trust the RECENT CONVERSATION more as it represents the latest state.
-- Keep the tone professional, concise, and documentation-oriented.
 - Output ONLY the Markdown content, no extra conversational filler.
+- Keep the tone professional, concise, and documentation-oriented.
 """
 
 def _get_architect_model_config():
