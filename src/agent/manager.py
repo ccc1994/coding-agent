@@ -2,20 +2,20 @@ import os
 
 def ensure_project_setup(project_root: str):
     """
-    确保必需的目录（.ca）存在，
-    并且 .ca 文件夹被 git 忽略。
+    确保必需的目录（.chaos）存在，
+    并且 .chaos 文件夹被 git 忽略。
     """
     if not os.path.exists(project_root):
         os.makedirs(project_root)
         print(f"已创建项目根目录：{project_root}")
 
-    ca_dir = os.path.join(project_root, ".ca")
-    if not os.path.exists(ca_dir):
-        os.makedirs(ca_dir)
-        print(f"已创建元数据目录：{ca_dir}")
+    chaos_dir = os.path.join(project_root, ".chaos")
+    if not os.path.exists(chaos_dir):
+        os.makedirs(chaos_dir)
+        print(f"已创建元数据目录：{chaos_dir}")
 
     gitignore_path = os.path.join(project_root, ".gitignore")
-    ignore_entries = [".ca/"]
+    ignore_entries = [".chaos/"]
     
     if os.path.exists(gitignore_path):
         with open(gitignore_path, "r") as f:

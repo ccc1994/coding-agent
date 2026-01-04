@@ -86,7 +86,7 @@ def search_code(query: str, path: str = ".", max_matches: int = 50) -> str:
     results = []
     matches_count = 0
     # 定义要忽略的目录和文件后缀
-    ignore_dirs = {".git", ".idea", ".vscode", "__pycache__", "node_modules", "dist", "build", "venv", ".ca", ".venv"}
+    ignore_dirs = {".git", ".idea", ".vscode", "__pycache__", "node_modules", "dist", "build", "venv", ".chaos", ".venv"}
     ignore_exts = {".exe", ".dll", ".so", ".bin", ".jpg", ".png", ".zip", ".pyc"}
     
     # 遍历文件
@@ -231,7 +231,7 @@ def get_file_tree(path: str = ".", max_depth: int = 2) -> str:
             return f"错误：路径 '{path}' 不存在。"
         
         tree = []
-        ignore_dirs = {".git", ".ca", "node_modules", "__pycache__", ".venv", "build", "dist", ".cache"}
+        ignore_dirs = {".git", ".chaos", "node_modules", "__pycache__", ".venv", "build", "dist", ".cache"}
         
         # 记录起始路径的深度
         start_path = os.path.abspath(path)

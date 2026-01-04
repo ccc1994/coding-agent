@@ -71,7 +71,7 @@ def _initialize_settings():
 
 def load_ignore_patterns(project_root: str) -> List[str]:
     """从 .gitignore 加载忽略模式"""
-    patterns = ['.venv', '.git', '.ca', '.cache', 'node_modules', '__pycache__']
+    patterns = ['.venv', '.git', '.chaos', '.cache', 'node_modules', '__pycache__']
     gitignore_path = os.path.join(project_root, ".gitignore")
     if os.path.exists(gitignore_path):
         with open(gitignore_path, "r") as f:
@@ -151,7 +151,7 @@ def build_index(project_root: str):
     if not _initialize_settings():
         return
         
-    db_path = os.path.join(project_root, ".ca", "chroma_db")
+    db_path = os.path.join(project_root, ".chaos", "chroma_db")
     
     with _index_lock:
         try:
@@ -253,7 +253,7 @@ def update_index(project_root: str, changed_file: str = None):
             from llama_index.core import SimpleDirectoryReader
             
             # 持久化路径
-            db_path = os.path.join(project_root, ".ca", "chroma_db")
+            db_path = os.path.join(project_root, ".chaos", "chroma_db")
             
             if changed_file:
                 # === 单文件更新流程 ===

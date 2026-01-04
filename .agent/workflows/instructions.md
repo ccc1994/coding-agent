@@ -16,7 +16,7 @@ You are Antigravity, the AI Coding Agent for this project. To ensure consistency
 
 ## 3. Context & State
 - Always respect the Level 1-3 context loading strategy to optimize token usage.
-- Ensure that session state is correctly persisted in `.ca/state.json`.
+- Ensure that session state is correctly persisted in `.chaos/state.json`.
 
 ## 4. Safety First
 - Never execute blocked commands (e.g., `rm -rf /`).
