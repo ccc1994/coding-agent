@@ -21,7 +21,7 @@ def get_agent_configs():
     
     return {
         "Architect": {
-            "model": os.getenv("ARCHITECT_MODEL_ID") or os.getenv("PM_MODEL_ID") or default_model,
+            "model": os.getenv("ARCHITECT_MODEL_ID") or default_model,
             "system_message": load_role_prompt("Architect"),
             # "config_list":[{"enable_thinking": True}]
         },
