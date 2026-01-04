@@ -1282,8 +1282,12 @@ dependencies = [
     { name = "pyright" },
     { name = "python-dotenv" },
     { name = "python-lsp-server" },
+    { name = "python-ripgrep", version = "0.0.8", source = { registry = "https://bytedpypi.byted.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "python-ripgrep", version = "0.0.9", source = { registry = "https://bytedpypi.byted.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "requests" },
     { name = "rich" },
+    { name = "ripgrep" },
+    { name = "ripgrepy" },
     { name = "tree-sitter", version = "0.23.2", source = { registry = "https://bytedpypi.byted.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "tree-sitter", version = "0.25.2", source = { registry = "https://bytedpypi.byted.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "tree-sitter-languages" },
@@ -1316,8 +1320,11 @@ requires-dist = [
     { name = "pyright", specifier = ">=1.1.407" },
     { name = "python-dotenv" },
     { name = "python-lsp-server", specifier = ">=1.14.0" },
+    { name = "python-ripgrep", specifier = ">=0.0.8" },
     { name = "requests" },
     { name = "rich" },
+    { name = "ripgrep", specifier = ">=15.0.0" },
+    { name = "ripgrepy", specifier = ">=2.2.0" },
     { name = "tree-sitter", specifier = ">=0.23.2" },
     { name = "tree-sitter-languages", specifier = ">=1.10.2" },
     { name = "tree-sitter-python", specifier = ">=0.23.6" },
@@ -5701,6 +5708,64 @@ wheels = [
 ]
 
 [[package]]
+name = "python-ripgrep"
+version = "0.0.8"
+source = { registry = "https://bytedpypi.byted.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.10' and sys_platform == 'win32'",
+    "python_full_version < '3.10' and sys_platform != 'win32'",
+]
+sdist = { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8.tar.gz", hash = "sha256:ebb0f4618c4a15baad524beab636e2b59e87b4ca283ceed0a1026384118d466b" }
+wheels = [
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:1a5ba9063d4f6c15bd2c77cb3f5d94af0c550a4530179340dbeaea0a5d55e0dd" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:2129ea8a9be97122a437518d3b856ca01b2c83c29b107ffa6dea0f30678ef442" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:727d5066a8dc2c3b60b1b0825727185d1204685c0dc061ceaf489d9255a8ffcf" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:aac02ab81bd582e3fbc8f7069cd7ebc271c164f38b26c375b1a05af291abc1e0" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:db6e7226e12cf3fce2439bbc7a1483ee30a037c07d1c044d87e420fe93be7614" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8b9cace3e6425442c85426d239249b7a5c7694ee84d5318a607b64de5b2de080" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:1a49a13680bb3a8400fb9711983c801c019e33fdd0c93a797baf435309eda7b7" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:55e214264de03497ff80e768d7c277383c4fba9c2b000a102b132a7430a8453a" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:ea68a80096aaefde6dea0054c0e94d868e87f22fe095a69801e86e92c5e6a689" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:18a4dad0122213c01cdb19f8bfb9cd0535c9cd4fecc9a444be77a58088dcb6a6" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-musllinux_1_2_i686.whl", hash = "sha256:f46fdd232716c371b57977da5753038a95fcc0e0b45a882910987be1802e555f" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:48be1bff7df234fed96a839022075c75e9c03f0e8c247a55d990a7d448639041" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-win32.whl", hash = "sha256:d52fffe9a779ae0cabadd24a891d9ba336628291b52812b03fb0fac31f7dd10b" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.8-cp38-abi3-win_amd64.whl", hash = "sha256:45ca2f4e7f104aee98eaddd9fa58487b7b4c092f61424fa8890bee3a8048efcb" },
+]
+
+[[package]]
+name = "python-ripgrep"
+version = "0.0.9"
+source = { registry = "https://bytedpypi.byted.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.10.*' and sys_platform == 'win32'",
+    "python_full_version >= '3.13' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'win32'",
+    "python_full_version == '3.10.*' and sys_platform != 'win32'",
+]
+sdist = { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9.tar.gz", hash = "sha256:5a65b8252c76df9c523b837c2a4f86478cc2af996bac4d10f9b321c3768e259b" }
+wheels = [
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:a1a38b5a39beeb1b07a7e0d27942442fd61e61065660aa986051c90bcdaa323f" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:83d9b7908ce61a2fc3bb4e2318705c87099cc43a4453e6768e860a329d0a1a7a" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2e11004a12a31247c1d5a77bfb8a71793fa552a355c96498f68937348175ba2e" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:850ac515eb2ff370ccb0ddd934ca32f06f75e5fa5a3099111dad140079a26d99" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:193db1978e52ec2959913bee0189a1f5366178bcf19473de702ac9235f122740" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ec6a25229cc5998860ed4c4a14e1b29816ed98f8d17d4847d6fbe625e0bfdfda" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:8f9ff586d1f6667f60e29d5eadebcf28c01f9d68851662ad84665d83d940ed2d" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9acae870b9dba3d5a70aeeab687809dfad7c2afe3c422fedb9fca3d578b5d422" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:2be02995828e36c8b37cdb6af50178021bc580f0ca6766f4d14806aa904641ae" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:fcf0007fd3e39b5fd2cc941af5eacb24de2d5268ad41ae6edaf7abbc5b3965d4" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-musllinux_1_2_i686.whl", hash = "sha256:004b1223684f457ab96d180edb2ba64bc1c0c0b26053254bc345443e6a3d83c8" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:80cb59c90e98cf83325b4dbad36c1569fc9c658aa2d1244943bf0d98352227d4" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-win32.whl", hash = "sha256:69b4039f1c86313a4f39350db19a720c41a1b5396b61abb5c9b9077794b740ad" },
+    { url = "https://bytedpypi.byted.org/packages/python-ripgrep/python_ripgrep-0.0.9-cp38-abi3-win_amd64.whl", hash = "sha256:fb92b64c9e854ab74e15ab4348f93fbc2c2a7384ab946be5e1fa59cc98cb516f" },
+]
+
+[[package]]
 name = "pytokens"
 version = "0.3.0"
 source = { registry = "https://bytedpypi.byted.org/simple" }
@@ -5993,6 +6058,22 @@ sdist = { url = "https://bytedpypi.byted.org/packages/rich/rich-14.2.0.tar.gz", 
 wheels = [
     { url = "https://bytedpypi.byted.org/packages/rich/rich-14.2.0-py3-none-any.whl", hash = "sha256:76bc51fe2e57d2b1be1f96c524b890b816e334ab4c1e45888799bfaab0021edd" },
 ]
+
+[[package]]
+name = "ripgrep"
+version = "15.0.0"
+source = { registry = "https://bytedpypi.byted.org/simple" }
+sdist = { url = "https://bytedpypi.byted.org/packages/ripgrep/ripgrep-15.0.0.tar.gz", hash = "sha256:51ee063a756cb13cb0d72333e57b736e678a6a3c99c3feaa0669331382cf88ad" }
+wheels = [
+    { url = "https://bytedpypi.byted.org/packages/ripgrep/ripgrep-15.0.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:ba377ff6f9fbc10e0ca0a0cc6cd19849380bdbd3cce6ca1c94c2e3fd24b9819c" },
+    { url = "https://bytedpypi.byted.org/packages/ripgrep/ripgrep-15.0.0-py3-none-manylinux_2_39_x86_64.whl", hash = "sha256:33b72e58758652ef22e8df95e8790874a114872f548b9cb0c65c8dba533e7d73" },
+]
+
+[[package]]
+name = "ripgrepy"
+version = "2.2.0"
+source = { registry = "https://bytedpypi.byted.org/simple" }
+sdist = { url = "https://bytedpypi.byted.org/packages/ripgrepy/ripgrepy-2.2.0.tar.gz", hash = "sha256:4c43c61384f257660007acd271a5d8e4abe9be0b069c418d091f7299e080ca9d" }
 
 [[package]]
 name = "rpds-py"

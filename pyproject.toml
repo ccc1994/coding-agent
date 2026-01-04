@@ -37,6 +37,9 @@ dependencies = [
     "python-lsp-server>=1.14.0",
     "pyright>=1.1.407",
     "watchdog>=6.0.0",
+    "ripgrepy>=2.2.0",
+    "python-ripgrep>=0.0.8",
+    "ripgrep>=15.0.0",
 ]
 
 [tool.setuptools.packages.find]

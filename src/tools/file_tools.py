@@ -45,29 +45,63 @@ def search_code(query: str, path: str = ".", max_matches: int = 50) -> str:
         path: 搜索路径
         max_matches: 最大返回匹配数，防止上下文溢出
     """
+    try:
+        from ripgrepy import Ripgrepy, RipGrepNotFound
+        
+        # 使用 ripgrepy 构造搜索
+        # fixed_strings(): 固定字符串搜索 (保持原函数行为，非正则)
+        # line_number(): 显示行号
+        # no_heading(): 不按文件分组，方便每行显示文件名
+        # with_filename(): 强制每行显示文件名
+        # max_columns(500): 忽略超长行
+        rg = Ripgrepy(query, path)
+        rg.fixed_strings().line_number().no_heading().with_filename().max_columns(500)
+        
+        # 执行搜索并获取结果列表
+        # 注意：ripgrep 的 max_count 是指每个文件的最大匹配数，
+        # 而我们的 max_matches 是全局最大匹配数。
+        # 所以我们先不设限地运行，然后在 Python 层截断。
+        # 如果担心性能，可以设一个较大的全局上限。
+        out = rg.run()
+        results = out.as_list
+        
+        if not results:
+            return "未找到匹配项。"
+            
+        count = len(results)
+        if count > max_matches:
+            results = results[:max_matches]
+            results.append(f"\n[系统提示] 搜索结果过多，已截断。仅显示前 {max_matches} 条。请尝试更精确的关键词或指定具体目录。")
+            
+        return "\n".join(results)
+
+    except (ImportError, RipGrepNotFound):
+        # 如果未安装 ripgrepy 或找不到 rg 引擎，回退到原生 Python 实现
+        pass
+    except Exception as e:
+        # 其他异常也回退
+        pass
+
+    # === 原生 Python 回退实现 ===
     results = []
     matches_count = 0
-    # 定义要忽略的目录和文件后缀（可以根据项目调整）
-    ignore_dirs = {".git", ".idea", ".vscode", "__pycache__", "node_modules", "dist", "build", "venv"}
+    # 定义要忽略的目录和文件后缀
+    ignore_dirs = {".git", ".idea", ".vscode", "__pycache__", "node_modules", "dist", "build", "venv", ".ca", ".venv"}
     ignore_exts = {".exe", ".dll", ".so", ".bin", ".jpg", ".png", ".zip", ".pyc"}
     
     # 遍历文件
     for root, dirs, files in os.walk(path, topdown=True):
-        # 1. 剪枝：原地修改 dirs 列表，阻止 os.walk 进入这些目录，提高搜索速度
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         
         for file in files:
-            # 2. 过滤非文本文件后缀
             if any(file.endswith(ext) for ext in ignore_exts):
                 continue
                 
             file_path = os.path.join(root, file)
             
             try:
-                # 3. 设置文件读取大小限制或行长度检查
                 with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
                     for i, line in enumerate(f, 1):
-                        # 4. 过滤超长行（通常是压缩代码或数据文件）
                         if len(line) > 500: 
                             continue
                             
@@ -75,7 +109,6 @@ def search_code(query: str, path: str = ".", max_matches: int = 50) -> str:
                             matches_count += 1
                             results.append(f"{file_path}:{i}: {line.strip()}")
                             
-                            # 5. 硬中断：如果达到最大匹配数，立即停止
                             if matches_count >= max_matches:
                                 results.append(f"\n[系统提示] 搜索结果过多，已截断。仅显示前 {max_matches} 条。请尝试更精确的关键词或指定具体目录。")
                                 return "\n".join(results)
