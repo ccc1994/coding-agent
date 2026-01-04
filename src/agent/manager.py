@@ -36,5 +36,29 @@ def ensure_project_setup(project_root: str):
                 f.write(f"{entry}\n")
         print("已创建包含存储条目的 .gitignore 文件。")
 
+def load_project_memory(project_root: str) -> str:
+    """
+    加载项目级长期记忆。
+    依次检查 CHAOS.md 和 .chaos/project_summary.md
+    """
+    memory_files = ["CHAOS.md", os.path.join(".chaos", "project_summary.md")]
+    memories = []
+    
+    for relative_path in memory_files:
+        file_path = os.path.join(project_root, relative_path)
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                    if content:
+                        memories.append(f"[{relative_path}]:\n{content}")
+            except Exception as e:
+                print(f"读取记忆文件 {relative_path} 失败: {e}")
+                
+    if not memories:
+        return ""
+        
+    return "\n\n[Project Summary]:\n" + "\n\n".join(memories)
+
 if __name__ == "__main__":
     ensure_project_setup(os.getcwd())

@@ -18,7 +18,7 @@ from rich.padding import Padding
 from prompt_toolkit import prompt
 from prompt_toolkit.key_binding import KeyBindings
 
-from src.agent.manager import ensure_project_setup
+from src.agent.manager import ensure_project_setup, load_project_memory
 from src.agent.agents import create_agents
 from src.agent.orchestrator import setup_orchestration, start_multi_agent_session
 from src.tools.index_tools import build_index_async, update_index, start_index_watcher
@@ -115,7 +115,10 @@ def main():
             if first_time:
                 # 第一次带上项目结构
                 l1_context = get_file_tree(project_root)
-                full_prompt = f"[ProjectStructure]:\n{l1_context}\n[需求]\n{user_input}"
+                # 加载项目长期记忆
+                project_memory = load_project_memory(project_root)
+                
+                full_prompt = f"[Project Structure]:\n{l1_context}\n{project_memory}\n[需求]\n{user_input}"
                 first_time = False
 
             # 启动会话
