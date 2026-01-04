@@ -8,5 +8,19 @@ fi
 # Set PYTHONPATH to current directory
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-cd playground
-python3 ../src/main.py "$@"
+# Determine working directory
+WORK_DIR="playground"
+if [ "$1" ]; then
+    WORK_DIR="$1"
+fi
+
+if [ ! -d "$WORK_DIR" ]; then
+    echo "Error: Directory '$WORK_DIR' does not exist."
+    exit 1
+fi
+
+# Get absolute path of src/main.py before changing directory
+SCRIPT_PATH=$(pwd)/src/main.py
+
+cd "$WORK_DIR"
+python3 "$SCRIPT_PATH"

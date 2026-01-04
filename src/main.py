@@ -71,6 +71,7 @@ async def main():
         console.print(f"[bold red]检查 Phoenix 时发生错误: {e}，跳过 OpenInference 初始化。[/bold red]")
     
     project_root =os.getcwd()
+    console.print(f"[dim]工作目录: {project_root}[/dim]")
     config.project_root = project_root
     # todo 没必要?
     ensure_project_setup(project_root)

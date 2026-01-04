@@ -216,9 +216,14 @@ def build_index(project_root: str):
                     exclude=ignore_patterns,
                     filename_as_id=True  # 关键：使用文件路径作为 ID，便于更新
                 )
-                documents = reader.load_data()
                 
-                nodes = _process_documents_to_nodes(documents)
+                try:
+                    documents = reader.load_data()
+                    nodes = _process_documents_to_nodes(documents)
+                except ValueError:
+                    # 如果目录为空或没有匹配文件，reader.load_data() 会抛出 ValueError
+                    logger.warning(f"在 {project_root} 中未找到可索引的文件，将创建空索引。")
+                    nodes = []
                 
                 _index = VectorStoreIndex(nodes, storage_context=storage_context)
                 _index.storage_context.persist(persist_dir=db_path)

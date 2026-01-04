@@ -12,14 +12,12 @@ def ensure_project_setup(project_root: str):
     chaos_dir = os.path.join(project_root, ".chaos")
     if not os.path.exists(chaos_dir):
         os.makedirs(chaos_dir)
-        print(f"已创建元数据目录：{chaos_dir}")
 
     # Ensure mcp.json exists
     mcp_config_path = os.path.join(chaos_dir, "mcp.json")
     if not os.path.exists(mcp_config_path):
         with open(mcp_config_path, "w") as f:
             f.write('{\n    "mcp_servers": {}\n}')
-        print(f"已创建默认 MCP 配置文件：{mcp_config_path}")
 
     gitignore_path = os.path.join(project_root, ".gitignore")
     ignore_entries = [".chaos/"]
@@ -35,13 +33,11 @@ def ensure_project_setup(project_root: str):
                 f.write("\n# Coding Agent 存储空间\n")
                 for entry in needed_entries:
                     f.write(f"{entry}\n")
-            print(f"已更新 .gitignore，添加了：{', '.join(needed_entries)}")
     else:
         with open(gitignore_path, "w") as f:
             f.write("# Coding Agent 存储空间\n")
             for entry in ignore_entries:
                 f.write(f"{entry}\n")
-        print("已创建包含存储条目的 .gitignore 文件。")
 
 def load_project_memory(project_root: str) -> str:
     """
