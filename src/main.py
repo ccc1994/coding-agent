@@ -39,7 +39,7 @@ console = Console()
 def main():
     # 1. 初始化
     load_dotenv()
-
+    
     resource = Resource.create({
         "service.name": "CodingAgent",  # 这个就是 Phoenix 中显示的 Project Name
         "environment": "development"
@@ -53,6 +53,7 @@ def main():
     OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
     patch_autogen_instrumentation() # Apply the patch
     AutogenInstrumentor().instrument()
+    
     project_root =os.getcwd()
     config.project_root = project_root
     # todo 没必要?
@@ -76,11 +77,12 @@ def main():
     except Exception as e:
         console.print(f"[bold red]系统初始化出错：[/bold red] {e}")
         sys.exit(1)
-
+    
 
     print_banner()
 
     # 5. 交互循环
+    first_time = True
     while True:
         try:
             user_input = get_advanced_input()
@@ -92,9 +94,12 @@ def main():
             if not user_input.strip():
                 continue
 
-            # 自动注入第一级上下文 (Level 1 Context)
-            l1_context = get_file_tree(project_root)
-            full_prompt = f"[ProjectStructure]:\n{l1_context}\n[用户需求]\n{user_input}"
+            full_prompt = user_input
+            if first_time:
+                # 第一次带上项目结构
+                l1_context = get_file_tree(project_root)
+                full_prompt = f"[ProjectStructure]:\n{l1_context}\n[需求]\n{user_input}"
+                first_time = False
 
             # 启动会话
             console.print(f"\n[bold blue]正在启动...[/bold blue]\n")

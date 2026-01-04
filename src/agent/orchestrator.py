@@ -147,4 +147,4 @@ def setup_implementation_group_chat(coder, reviewer, tester, user_proxy, manager
 
 def start_multi_agent_session(manager, user_proxy, user_input: str):
     """启动协作会话。"""
-    user_proxy.initiate_chat(manager, message=user_input)
+    user_proxy.initiate_chat(manager, message=user_input, clear_history=False)

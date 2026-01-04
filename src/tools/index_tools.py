@@ -3,20 +3,7 @@ import config
 import threading
 import logging
 from typing import List, Optional
-import chromadb
-from llama_index.core import (
-    VectorStoreIndex, 
-    SimpleDirectoryReader, 
-    StorageContext, 
-    load_index_from_storage,
-    Settings
-)
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.node_parser import CodeSplitter, SentenceSplitter
-from llama_index.embeddings.openai import OpenAIEmbedding
-from tree_sitter_languages import get_parser
-from llama_index.llms.openai_like import OpenAILike
-from llama_index.core.postprocessor import SimilarityPostprocessor
+# 移除全局重型导入，改为函数内按需导入
 
 
 # 配置日志
@@ -39,7 +26,9 @@ def _initialize_settings():
         return False
         
     try:
+        from llama_index.llms.openai_like import OpenAILike
         from llama_index.embeddings.openai import OpenAIEmbedding
+        from llama_index.core import Settings
         
         Settings.llm = OpenAILike(
             model=str(llm_model),
@@ -103,6 +92,10 @@ def build_index(project_root: str):
     
     with _index_lock:
         try:
+            import chromadb
+            from llama_index.vector_stores.chroma import ChromaVectorStore
+            from llama_index.core import VectorStoreIndex, StorageContext
+            
             # 初始化 ChromaDB
             db = chromadb.PersistentClient(path=db_path)
             chroma_collection = db.get_or_create_collection("code_index")
@@ -118,6 +111,8 @@ def build_index(project_root: str):
                 logger.info("索引加载成功。")
             else:
                 logger.info("正在构建新索引并存入 ChromaDB...")
+                
+                from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
                 
                 ignore_patterns = load_ignore_patterns(project_root)
 
@@ -153,6 +148,8 @@ def build_index(project_root: str):
                     if lang:
                         if lang not in splitter_cache:
                             try:
+                                from llama_index.core.node_parser import CodeSplitter, SentenceSplitter
+                                from tree_sitter_languages import get_parser
                                 # 显式传递 parser 以绕过 tree_sitter_language_pack 缺失的问题
                                 parser = get_parser(lang)
                                 splitter_cache[lang] = CodeSplitter(
@@ -169,6 +166,7 @@ def build_index(project_root: str):
                         splitter = splitter_cache[lang]
                         nodes.extend(splitter.get_nodes_from_documents([doc]))
                     else:
+                        from llama_index.core.node_parser import SentenceSplitter
                         nodes.extend(SentenceSplitter().get_nodes_from_documents([doc]))
                 _index = VectorStoreIndex(nodes, storage_context=storage_context)
                 logger.info(f"索引构建完成并存入 ChromaDB，路径: {db_path}")
@@ -210,6 +208,7 @@ def semantic_code_search(query: str) -> str:
     base_prefix = os.path.join(config.project_root, "")
     
     try:
+        from llama_index.core.postprocessor import SimilarityPostprocessor
         processor = SimilarityPostprocessor(similarity_cutoff=0.1)
         
         query_engine = _index.as_query_engine(
