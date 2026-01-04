@@ -36,6 +36,7 @@ dependencies = [
     "pygls>=2.0.0",
     "python-lsp-server>=1.14.0",
     "pyright>=1.1.407",
+    "watchdog>=6.0.0",
 ]
 
 [tool.setuptools.packages.find]

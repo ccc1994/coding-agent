@@ -21,7 +21,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from src.agent.manager import ensure_project_setup
 from src.agent.agents import create_agents
 from src.agent.orchestrator import setup_orchestration, start_multi_agent_session
-from src.tools.index_tools import build_index_async
+from src.tools.index_tools import build_index_async, update_index, start_index_watcher
 
 from openinference.instrumentation.autogen import AutogenInstrumentor
 from opentelemetry import trace
@@ -59,8 +59,11 @@ def main():
     # todo 没必要?
     ensure_project_setup(project_root)
     
-    # 构建代码索引 (异步)
+    # 构建或更新代码索引
     build_index_async(project_root)
+    
+    # 启动实时文件监听器
+    start_index_watcher(project_root)
 
     # 2. 配置检查
     api_key = os.getenv("DASHSCOPE_API_KEY")
@@ -88,7 +91,7 @@ def main():
             user_input = get_advanced_input()
             
             if user_input.lower() in ["exit", "quit"]:
-                console.print("[yellow]正在关闭... 再见！[/yellow]")
+                console.print("[yellow]正在关闭...[/yellow]")
                 break
             
             if not user_input.strip():
@@ -130,4 +133,11 @@ def get_advanced_input():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]正在关闭...[/yellow]")
+        # 停止索引监听器
+        from src.tools.index_tools import stop_index_watcher
+        stop_index_watcher()
+        sys.exit(0)
