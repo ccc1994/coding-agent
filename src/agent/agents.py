@@ -35,7 +35,7 @@ def get_agent_configs():
         }
     }
 
-def create_agents(api_key: str, base_url: str):
+def create_agents(api_key: str, base_url: str, mcp_manager=None):
     """初始化带有特定角色模型配置的 AutoGen Agent。"""
     configs = get_agent_configs()
     
@@ -222,6 +222,37 @@ def create_agents(api_key: str, base_url: str):
                 executor=tester,
                 name=tool.__name__,
                 description=tool.__doc__
+            )
+
+    # 5. 注册 MCP 工具
+    if mcp_manager:
+        # Register definitions for Agents (Callers)
+        for tool_def in mcp_manager.tools:
+            for agent in [architect, coder, reviewer]:
+                if agent.llm_config:
+                    if "tools" not in agent.llm_config["config_list"][0]:
+                        agent.llm_config["config_list"][0]["tools"] = []
+                    # Avoid duplicates
+                    existing_tools = [t["function"]["name"] for t in agent.llm_config["config_list"][0]["tools"]]
+                    if tool_def["function"]["name"] not in existing_tools:
+                        agent.llm_config["config_list"][0]["tools"].append(tool_def)
+        
+        # Register functions for UserProxy (Executor)
+        # Note: AutoGen executes tools via the executor agent.
+        # We need to ensure the function map is populated.
+        # We can update user_proxy._function_map directly or use register_function in a way that respects it?
+        # register_function helper registers to agent.function_map.
+        
+        for name, func in mcp_manager.tool_functions.items():
+            user_proxy.register_function(
+                function_map={name: func}
+            )
+            # Also register for Coder self-execution if needed? 
+            # Coder has code_execution_config=False, so it relies on executor (UserProxy) or itself if it is the executor.
+            # In previous blocks: executor=coder for some tools.
+            # Let's register for Coder as executor too, just in case.
+            coder.register_function(
+                function_map={name: func}
             )
 
     return architect, coder, reviewer, tester, user_proxy, make_manager_config()

@@ -7,7 +7,7 @@ name = "coding-agent"
 version = "0.1.0"
 description = "An AI-powered coding agent built with Python"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "requests",
     "python-dotenv",
@@ -40,6 +40,7 @@ dependencies = [
     "ripgrepy>=2.2.0",
     "python-ripgrep>=0.0.8",
     "ripgrep>=15.0.0",
+    "mcp>=1.25.0",
 ]
 
 [tool.setuptools.packages.find]

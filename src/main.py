@@ -32,11 +32,13 @@ from opentelemetry.sdk.resources import Resource
 from openinference.instrumentation.openai import OpenAIInstrumentor
 from src.cli.banner import print_banner
 from src.patch_autogen import patch_autogen_instrumentation
+from src.tools.mcp_manager import MCPManager
 import config
+import asyncio
 
 console = Console()
 
-def main():
+async def main():
     # 1. 初始化
     load_dotenv()
     
@@ -73,6 +75,10 @@ def main():
     # todo 没必要?
     ensure_project_setup(project_root)
     
+    # 初始化 MCP (Model Context Protocol)
+    mcp_manager = MCPManager(project_root)
+    await mcp_manager.initialize()
+    
     # 构建或更新代码索引
     build_index_async(project_root)
     
@@ -89,7 +95,7 @@ def main():
 
     # 3. Agent 与编排设置
     try:
-        architect, coder, reviewer, tester, user_proxy, manager_config = create_agents(api_key, base_url)
+        architect, coder, reviewer, tester, user_proxy, manager_config = create_agents(api_key, base_url, mcp_manager)
         manager = setup_orchestration(architect, coder, reviewer, tester, user_proxy, manager_config)
     except Exception as e:
         console.print(f"[bold red]系统初始化出错：[/bold red] {e}")
@@ -151,7 +157,7 @@ def get_advanced_input():
 
 if __name__ == "__main__":
     try:
-        main()
+        asyncio.run(main())
     except KeyboardInterrupt:
         console.print("\n[yellow]正在关闭...[/yellow]")
         # 停止索引监听器

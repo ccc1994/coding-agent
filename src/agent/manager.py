@@ -14,6 +14,13 @@ def ensure_project_setup(project_root: str):
         os.makedirs(chaos_dir)
         print(f"已创建元数据目录：{chaos_dir}")
 
+    # Ensure mcp.json exists
+    mcp_config_path = os.path.join(chaos_dir, "mcp.json")
+    if not os.path.exists(mcp_config_path):
+        with open(mcp_config_path, "w") as f:
+            f.write('{\n    "mcp_servers": {}\n}')
+        print(f"已创建默认 MCP 配置文件：{mcp_config_path}")
+
     gitignore_path = os.path.join(project_root, ".gitignore")
     ignore_entries = [".chaos/"]
     
