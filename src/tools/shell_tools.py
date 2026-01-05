@@ -162,7 +162,7 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
                 if result.returncode == 0:
                     return "命令执行成功。"
                 elif result.returncode in [-2, 130]: # SIGINT
-                    return "命令被用户中断 (SIGINT)。如果该命令启动了长驻服务，这通常意味着服务已成功启动并随后被手动停止, 请先检查命令是否已正确执行。"
+                    return "命令被用户中断。如果该命令启动了长驻服务，这通常意味着服务已成功启动并随后被手动停止, 请先检查命令是否已正确执行。"
                 else:
                     return f"命令执行失败，退出码：{result.returncode}"
             except subprocess.TimeoutExpired:

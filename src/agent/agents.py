@@ -96,7 +96,7 @@ def create_agents(api_key: str, base_url: str, mcp_manager=None):
     )
 
     user_proxy = UserProxyAgent(
-        name="System",
+        name="Coordinator",
         human_input_mode="NEVER",
         max_consecutive_auto_reply=30,
         is_termination_msg=lambda x: "TERMINATE" in (x.get("content", "") or "").upper(),

@@ -14,7 +14,7 @@ def setup_orchestration(architect, coder,  tester,  user_proxy,manager_config):
     """注册工具并设置带有规范驱动流程的嵌套 GroupChat。"""
     
     # 设置实现子聊天组
-    implementation_manager = setup_implementation_group_chat(coder,  tester, manager_config)
+    dev_group = setup_dev_group_chat(coder,  tester, manager_config)
     
     def prepare_task_message(recipient, messages, sender, config):
         full_content = messages[-1].get("content", "")
@@ -38,7 +38,7 @@ def setup_orchestration(architect, coder,  tester,  user_proxy,manager_config):
     user_proxy.register_nested_chats(
         chat_queue=[
             {
-                "recipient": implementation_manager,
+                "recipient": dev_group,
                 "message": prepare_task_message,
                 "summary_method": "reflection_with_llm",
             }
@@ -57,7 +57,7 @@ def setup_orchestration(architect, coder,  tester,  user_proxy,manager_config):
         """,
         target_token=2000  # 压缩目标 token 数
     )
-    compressor.agent_name = "ImplementationGroup"
+    compressor.agent_name = "DevGroup"
 
     architectCompressor = LLMMessagesCompressor(
         llm_config=manager_config,
@@ -73,7 +73,7 @@ def setup_orchestration(architect, coder,  tester,  user_proxy,manager_config):
 
     # 包装并注入 Agent
     context_handler = transform_messages.TransformMessages(transforms=[compressor])
-    context_handler.add_to_agent(implementation_manager)
+    context_handler.add_to_agent(dev_group)
     context_handler.add_to_agent(coder)
     context_handler.add_to_agent(tester)
     architect_context_handler = transform_messages.TransformMessages(transforms=[architectCompressor])
@@ -81,7 +81,7 @@ def setup_orchestration(architect, coder,  tester,  user_proxy,manager_config):
 
     return architect
 
-def setup_implementation_group_chat(coder,  tester, manager_config):
+def setup_dev_group_chat(coder,  tester, manager_config):
     
     # --- 1. 剥离 Manager 工具权限 (保持不变) ---
     selector_config = copy.deepcopy(manager_config)
@@ -89,7 +89,7 @@ def setup_implementation_group_chat(coder,  tester, manager_config):
     selector_config.pop("functions", None)
 
     # --- 2. 状态机定义 ---
-    implementation_graph_dict = {
+    dev_group_graph_dict = {
         coder: [coder, tester],
         tester: [coder, tester],
     }
@@ -130,26 +130,27 @@ def setup_implementation_group_chat(coder,  tester, manager_config):
         return "auto"
 
     # --- 4. 构建 GroupChat ---
-    implementation_groupchat = GroupChat(
+    dev_groupchat = GroupChat(
         agents=[coder, tester],
         messages=[],
         max_round=200,
         speaker_selection_method=custom_speaker_selection, 
-        allowed_or_disallowed_speaker_transitions=implementation_graph_dict,
+        allowed_or_disallowed_speaker_transitions=dev_group_graph_dict,
         speaker_transitions_type="allowed",
         select_speaker_prompt_template=select_speaker_prompt 
     )
 
     # --- 4. 构建 Manager ---
-    implementation_manager = GroupChatManager(
-        groupchat=implementation_groupchat,
+    dev_group = GroupChatManager(
+        name="DevGroup",
+        groupchat=dev_groupchat,
         llm_config=selector_config, 
         is_termination_msg=lambda x: "TERMINATE" in x.get("content", ""),
         description="A manager who ONLY orchestrates the workflow between Coder and Tester.",
         system_message="You are the manager of a coding group chat. Your role is to select the next speaker."
     )
 
-    return implementation_manager
+    return dev_group
 
 def start_multi_agent_session(manager, user_proxy, user_input: str):
     """启动协作会话。"""

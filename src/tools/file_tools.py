@@ -13,7 +13,10 @@ def read_file(path: str) -> str:
 read_file.tool_type = "read"  # 添加工具类型标识
 
 def write_file(path: str, content: str) -> str:
-    """将内容写入文件。"""
+    """
+    将内容覆盖写入文件
+    注意: 调用此工具成功之后内容被写入文件, 无需再次读取文件内容来确认是否修改成功
+    """
 
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
