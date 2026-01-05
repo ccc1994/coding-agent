@@ -7,8 +7,6 @@ from autogen.agentchat.contrib.capabilities import transform_messages
 from src.agent.compress import LLMTextCompressor, LLMMessagesCompressor
 import copy
 import os
-import config
-from src.agent.memory import trigger_project_memory_update
 
 def setup_orchestration(architect, coder,  tester,  user_proxy,manager_config):
     """注册工具并设置带有规范驱动流程的嵌套 GroupChat。"""
@@ -155,7 +153,3 @@ def setup_dev_group_chat(coder,  tester, manager_config):
 def start_multi_agent_session(manager, user_proxy, user_input: str):
     """启动协作会话。"""
     user_proxy.initiate_chat(manager, message=user_input, clear_history=False)
-    
-    # 异步触发项目长期记忆更新
-    if config.project_root:
-        trigger_project_memory_update(manager, config.project_root)
