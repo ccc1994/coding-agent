@@ -130,11 +130,12 @@ async def main():
             full_prompt = user_input
             if first_time:
                 # 第一次带上项目结构
-                l1_context = get_file_tree(project_root)
+                depth = 3
+                project_tree = get_file_tree(project_root,depth)
                 # 加载项目长期记忆
                 project_memory = load_project_memory(project_root)
                 
-                full_prompt = f"[Project Structure]:\n{l1_context}\n{project_memory}\n[需求]\n{user_input}"
+                full_prompt = f"当前工程目录结构如下(递归深度:{depth}):\n{project_tree}\n{project_memory}\n[需求]\n{user_input}"
                 first_time = False
 
             # 启动会话

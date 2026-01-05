@@ -120,7 +120,7 @@ def search_code(query: str, path: str = ".", max_matches: int = 50) -> str:
 
 search_code.tool_type = "read"
 
-def edit_block(path: str, pattern: str, replacement: str, is_regex: bool = False) -> str:
+def replace_in_file(path: str, pattern: str, replacement: str, is_regex: bool = False) -> str:
     """
     使用正则或字符串匹配替换文件中的代码块。
     
@@ -139,7 +139,7 @@ def edit_block(path: str, pattern: str, replacement: str, is_regex: bool = False
         操作结果描述，包含替换次数
     
     示例：
-        >>> edit_block("app.py", "old_function", "new_function")
+        >>> replace_in_file("app.py", "old_function", "new_function")
         "成功替换 3 处匹配项"
     """
     try:
@@ -168,7 +168,7 @@ def edit_block(path: str, pattern: str, replacement: str, is_regex: bool = False
         return f"正则表达式错误：{str(e)}"
     except Exception as e:
         return f"编辑失败：{str(e)}"
-edit_block.tool_type = "write"  # 添加工具类型标识
+replace_in_file.tool_type = "write"  # 添加工具类型标识
 
 def create_directory(path: str) -> str:
     """创建目录（包括父目录）。"""
@@ -193,30 +193,6 @@ def delete_file(path: str) -> str:
     except Exception as e:
         return f"删除失败：{str(e)}"
 delete_file.tool_type = "write"  # 添加工具类型标识
-
-def list_directory(path: str = ".") -> str:
-    """列出目录内容。"""
-    try:
-        if not os.path.exists(path):
-            return f"错误：目录 '{path}' 不存在。"
-        
-        items = os.listdir(path)
-        if not items:
-            return f"目录 '{path}' 为空。"
-        
-        result = []
-        for item in sorted(items):
-            item_path = os.path.join(path, item)
-            if os.path.isdir(item_path):
-                result.append(f"[DIR]  {item}/")
-            else:
-                size = os.path.getsize(item_path)
-                result.append(f"[FILE] {item} ({size} bytes)")
-        
-        return "\n".join(result)
-    except Exception as e:
-        return f"列出目录失败：{str(e)}"
-list_directory.tool_type = "read"  # 添加工具类型标识
 
 def get_file_tree(path: str = ".", max_depth: int = 2) -> str:
     """
@@ -316,10 +292,9 @@ def get_file_tools(tool_type: str = None) -> list:
         write_file, 
         insert_code, 
         search_code,
-        edit_block,
+        replace_in_file,
         create_directory,
         delete_file,
-        list_directory,
         get_file_tree,
         move_file,
         file_exists

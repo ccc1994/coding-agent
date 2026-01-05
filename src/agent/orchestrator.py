@@ -94,21 +94,17 @@ def setup_implementation_group_chat(coder,  tester, manager_config):
         tester: [coder, tester],
     }
 
-  # --- 3. 增强的选择指令 ---
-    # 定义选择时的系统引导词，防止它输出“我需要使用工具...”这种废话
     select_speaker_prompt = (
         "You are the orchestration manager. Your ONLY job is to look at the conversation "
         "and select the next role from the list. \n"
         "Rules:\n"
-        "1. If code is written, select Tester to check.\n"
-        "2. If Tester found bugs or errors, select Coder to fix.\n"
+        "1. Select Coder to perform and complete all assigned tasks. Coder should continue working until they explicitly state they are done and ready for verification.\n"
+        "2. Select Tester ONLY when Coder indicates tasks are completed (e.g., says '代码已就绪' or 'ready for verification') or when you need to verify a specific fix.\n"
+        "3. If Tester found bugs, select Coder to fix them.\n"
         "4. ONLY return the name of the next agent. DO NOT perform any tasks yourself."
     )
 
     def custom_speaker_selection(last_speaker, groupchat):
-        """
-        这个函数会在每一轮决定下一个是谁。
-        """
         messages = groupchat.messages
         if not messages or len(messages) == 1:
             return coder # 初始发言者
@@ -116,8 +112,19 @@ def setup_implementation_group_chat(coder,  tester, manager_config):
         last_msg = messages[-1]
 
         # 检查点：如果上一条消息发起了工具调用
-        if last_msg["role"] == "tool":
+        if last_msg.get("tool_calls"):
             return last_speaker
+        
+        # 如果上一条消息是工具执行结果，返回给发起者
+        if last_msg.get("role") == "tool":
+            return last_speaker
+
+        # 如果 Coder 刚说完话，检查它是否完成了任务
+        if last_speaker == coder:
+            content = (last_msg.get("content") or "").upper()
+            # 如果 Coder 没有明确表示“代码已就绪”或“请验证”，则让它继续完成任务
+            if "代码已就绪" in content: 
+                return tester
 
         # 如果没有工具调用，则使用传统的 'auto' 逻辑 (即让 Manager LLM 决定)
         return "auto"
