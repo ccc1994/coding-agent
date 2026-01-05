@@ -1,3 +1,8 @@
+from src.logger import setup_logger
+
+# 1. 初始化日志系统 (最优先)
+logger = setup_logger()
+
 import os
 
 # 抑制 transformers 库在未发现深度学习框架时的警告
@@ -39,7 +44,7 @@ import asyncio
 console = Console()
 
 async def main():
-    # 1. 初始化
+    # 1. 加载环境变量
     load_dotenv()
     
     # 检查 Phoenix 是否可用
@@ -66,9 +71,9 @@ async def main():
             patch_autogen_instrumentation() # Apply the patch
             AutogenInstrumentor().instrument()
         else:
-            console.print("[bold red]错误：未检测到 Phoenix (127.0.0.1:6006)，跳过 OpenInference 初始化。[/bold red]")
+            logger.warning("未检测到 Phoenix (127.0.0.1:6006)，跳过 OpenInference 初始化。")
     except Exception as e:
-        console.print(f"[bold red]检查 Phoenix 时发生错误: {e}，跳过 OpenInference 初始化。[/bold red]")
+        logger.error(f"检查 Phoenix 时发生错误: {e}")
     
     project_root =os.getcwd()
     config.project_root = project_root
@@ -90,7 +95,7 @@ async def main():
     base_url = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
     
     if not api_key:
-        console.print("[bold red]错误：[/bold red] .env 中未找到 DASHSCOPE_API_KEY。")
+        logger.error(".env 中未找到 DASHSCOPE_API_KEY。")
         sys.exit(1)
 
     # 3. Agent 与编排设置
@@ -98,7 +103,7 @@ async def main():
         architect, coder, reviewer, tester, user_proxy, manager_config = create_agents(api_key, base_url, mcp_manager)
         manager = setup_orchestration(architect, coder,  tester, user_proxy, manager_config)
     except Exception as e:
-        console.print(f"[bold red]系统初始化出错：[/bold red] {e}")
+        logger.error(f"系统初始化出错：{e}")
         sys.exit(1)
     
 

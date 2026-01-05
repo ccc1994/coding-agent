@@ -1,24 +1,25 @@
 from autogen.agentchat.contrib.capabilities.transforms import MessageTransform
 from typing import Any
 from opentelemetry import trace 
+from src.logger import logger
 
 
 class LLMTextCompressor:
-    """
+    \"\"\"
     使用大模型压缩文本的压缩器类。
-    """
+    \"\"\"
     
     def __init__(self, llm_config):
-        """
+        \"\"\"
         初始化 LLMTextCompressor。
         
         Args:
             llm_config: 大模型配置，包含 api_key、base_url、model 等信息
-        """
+        \"\"\"
         self.llm_config = llm_config
     
     def compress(self, text, **kwargs):
-        """
+        \"\"\"
         使用大模型压缩文本。
         
         Args:
@@ -27,13 +28,13 @@ class LLMTextCompressor:
         
         Returns:
             压缩后的文本内容
-        """
+        \"\"\"
         try:
             from openai import OpenAI
             
             # 获取压缩参数
             target_token = kwargs.get("target_token", 500)
-            print(f"开始压缩文本，目标 token 数：{target_token}")
+            logger.info(f"开始压缩文本，目标 token 数：{target_token}")
             compression_prompt = kwargs.get("compression_prompt", "你是一个专业的文本压缩专家。请将以下文本压缩到约 {target_token} 个token，保留核心信息、关键细节和重要结论。")
             
             # 获取 LLM 配置
@@ -161,7 +162,7 @@ class LLMMessagesCompressor(MessageTransform):
         if not messages:
             return messages
             
-        print(f"[{getattr(self, 'agent_name', 'Agent')}] 检查上下文压缩...")
+        logger.info(f"[{getattr(self, 'agent_name', 'Agent')}] 检查上下文压缩...")
         
         # 1. 计算当前消息的总 token 数
         # 如果有缓存的压缩消息，计算方式是：压缩消息的 token 数 + 未压缩消息的 token 数
@@ -200,17 +201,17 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 如果总 token 数未超过阈值，直接返回原始消息
             if total_token_count <= self.max_tokens:
-                print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
+                logger.info(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
                 return messages
             
-            print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
+            logger.info(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
             
             # 需要压缩，计算需要压缩的消息范围
             # 新的需要压缩的消息是从上次压缩的位置到最新消息中除了最近几轮的部分
             messages_to_compress = messages[uncompressed_start_index:recent_start_index]
 
             if not messages_to_compress or recent_start_index <=1:
-                print(f"compress failed, no message to compress, recent_start_index:{recent_start_index}")
+                logger.warning(f"compress failed, no message to compress, recent_start_index:{recent_start_index}")
                 return messages
             else: 
                 # 获取tracer
@@ -282,10 +283,10 @@ class LLMMessagesCompressor(MessageTransform):
             
             # 如果总 token 数未超过阈值，直接返回原始消息
             if total_token_count <= self.max_tokens:
-                print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
+                logger.info(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 跳过压缩")
                 return messages
             
-            print(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
+            logger.info(f"  - [{self.agent_name}] 当前 token 数: {total_token_count} (阈值: {self.max_tokens}) -> 触发压缩!")
             
             # 需要压缩，计算需要压缩的消息范围
             if len(messages) <= self.recent_rounds:
@@ -316,12 +317,12 @@ class LLMMessagesCompressor(MessageTransform):
                 # 只显示消息的角色和内容前50个字符，避免输出过长
                 msg = messages[recent_start_index]
                 msg_content = msg.get("content", "")[:50] + "..." if len(msg.get("content", "")) > 50 else msg.get("content", "")
-                print(f"messageCount: {len(messages)}, recent_start_index: {recent_start_index}, recent_start_msg: {{'role': '{msg.get('role')}', 'content': '{msg_content}'}}")
+                logger.debug(f"messageCount: {len(messages)}, recent_start_index: {recent_start_index}, recent_start_msg: {{'role': '{msg.get('role')}', 'content': '{msg_content}'}}")
                 
                 # 考虑keep_first_n参数，只压缩keep_first_n之后的消息
                 messages_to_compress = messages[self.keep_first_n:recent_start_index]
                 if not messages_to_compress or recent_start_index <=1:
-                    print(f"compress failed, no message to compress, recent_start_index:{recent_start_index}")
+                    logger.warning(f"compress failed, no message to compress, recent_start_index:{recent_start_index}")
                     return messages
                 recent_messages = messages[recent_start_index:]
                 

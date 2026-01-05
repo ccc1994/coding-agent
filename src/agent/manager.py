@@ -1,4 +1,7 @@
 import os
+import logging
+
+logger = logging.getLogger("CodingAgent")
 
 def ensure_project_setup(project_root: str):
     """
@@ -7,7 +10,7 @@ def ensure_project_setup(project_root: str):
     """
     if not os.path.exists(project_root):
         os.makedirs(project_root)
-        print(f"已创建项目根目录：{project_root}")
+        logger.info(f"已创建项目根目录：{project_root}")
 
     chaos_dir = os.path.join(project_root, ".chaos")
     if not os.path.exists(chaos_dir):
@@ -56,7 +59,7 @@ def load_project_memory(project_root: str) -> str:
                     if content:
                         memories.append(f"[{relative_path}]:\n{content}")
             except Exception as e:
-                print(f"读取记忆文件 {relative_path} 失败: {e}")
+                logger.error(f"读取记忆文件 {relative_path} 失败: {e}")
                 
     if not memories:
         return ""

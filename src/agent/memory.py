@@ -1,11 +1,13 @@
 import os
 import threading
 import json
+import logging
 from typing import List, Dict, Any
 from openai import OpenAI
 from opentelemetry import trace
 from rich.console import Console
 
+logger = logging.getLogger("CodingAgent")
 console = Console()
 tracer = trace.get_tracer(__name__)
 
@@ -119,7 +121,7 @@ def _perform_memory_update(project_root: str, chat_history: List[Dict]):
             
         except Exception as e:
             # Silently fail in background, but log to trace if possible
-            print(f"[MemoryUpdateError] {e}")
+            logger.error(f"[MemoryUpdateError] {e}")
 
 def trigger_project_memory_update(architect_agent, project_root: str):
     """

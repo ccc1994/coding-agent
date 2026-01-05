@@ -2,9 +2,11 @@ import subprocess
 import re
 import os
 import sys
+import logging
 from rich.console import Console
 from rich.prompt import Confirm
 
+logger = logging.getLogger("CodingAgent")
 console = Console()
 
 def analyze_command_with_llm(command: str) -> dict:
@@ -61,7 +63,7 @@ def analyze_command_with_llm(command: str) -> dict:
         
         return result
     except Exception as e:
-        console.print(f"[dim]LLM 分析失败: {e}，使用默认规则[/dim]")
+        logger.error(f"LLM 分析失败: {e}，使用默认规则")
         return {"is_blocking": is_blocking_heuristic, "is_interactive": is_interactive_heuristic, "reason": "降级到启发式规则"}
 
 
@@ -122,7 +124,9 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
             return "用户取消了命令执行。"
     else:
         # 安全命令直接执行，仅显示提示
-        console.print(f"[dim]执行命令：{command}[/dim]")
+    else:
+        # 安全命令直接执行，仅显示提示
+        logger.info(f"执行命令：{command}")
 
     try:
         # 使用 LLM 分析命令特征
@@ -131,7 +135,7 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
         is_interactive = analysis.get("is_interactive", False)
         reason = analysis.get("reason", "")
         
-        console.print(f"[dim]命令分析: {reason}[/dim]")
+        logger.info(f"命令分析: {reason}")
         
         if is_interactive:
             # 交互式命令：先在前台运行完成交互
@@ -269,7 +273,9 @@ def execute_shell(command: str, timeout: int = None, cwd: str = ".") -> str:
                 return truncate_output(f"命令启动后立即退出（退出码: {process.returncode}）\n输出：\n{full_out}\n错误：\n{stderr}")
         else:
             # 非交互式非阻塞命令：正常前台运行
-            console.print(f"[dim]执行命令：{command}[/dim]")
+        else:
+        # 安全命令直接执行，仅显示提示
+        logger.info(f"执行命令：{command}")
             
             process = subprocess.Popen(
                 command,

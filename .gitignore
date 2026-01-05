@@ -143,7 +143,13 @@ cython_debug/
 .vscode/
 
 # Coding Agent storage and playground
+
 .chaos/
+
 playground/
+
 empty/
+
+logs/
+
 .env
